@@ -1,4 +1,4 @@
-import { Order,} from "@/lib/custom-types";
+import {Order, StaffRole,} from "@/lib/custom-types";
 import {createFileRoute, notFound} from "@tanstack/react-router";
 import {zodSearchValidator} from "@tanstack/router-zod-adapter";
 import * as z from "zod";
@@ -16,6 +16,7 @@ import {InsuranceForm} from "@/forms/order/insurance-form.tsx";
 import {AdditionalServicesForm} from "@/forms/order/additional-services-form.tsx";
 import {Pricing} from "@/components/order/pricing.tsx";
 import {getCustomerById} from "@/lib/queries/customer.ts";
+import {CustomErrorComponent} from "@/components/error-component.tsx";
 
 const shipmentPageValidator = z.object({
   page: z.optional(
@@ -66,6 +67,13 @@ export const Route = createFileRoute("/_authenticated/orders/new")({
       <Page />
     </main>
   ),
+  beforeLoad: ({context}) => {
+    const {user} = context.auth
+    if (user.staff.role !== StaffRole.STATION_OFFICER && user.staff.role !== StaffRole.MANAGER)  throw new Error("You are not able to view this page, because, you are required to be a front line station staff to add new waybill")
+  },
+  errorComponent: ({error}) => {
+    return <CustomErrorComponent errorMessage={error.message} />;
+  }
 });
 
 function Page() {

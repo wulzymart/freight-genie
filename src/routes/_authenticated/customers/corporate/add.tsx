@@ -2,10 +2,11 @@ import {createFileRoute, notFound} from '@tanstack/react-router'
 import * as z from 'zod'
 import {zodSearchValidator} from "@tanstack/router-zod-adapter";
 import {getCustomerById} from "@/lib/queries/customer.ts";
-import {Customer} from "@/lib/custom-types.ts";
+import {Customer, StaffRole} from "@/lib/custom-types.ts";
 import TitleCard from "@/components/page-components/title.tsx";
 import {Prompt} from "@/forms/customer/new-customer-prompt..tsx";
 import {CorporateCustomerForm} from "@/forms/customer/corporate-customer.tsx";
+import {CustomErrorComponent} from "@/components/error-component.tsx";
 
 
 export const Route = createFileRoute('/_authenticated/customers/corporate/add')(
@@ -29,6 +30,13 @@ export const Route = createFileRoute('/_authenticated/customers/corporate/add')(
           }
       },
     component: () => <Page/>,
+      beforeLoad: ({context}) => {
+          const {user} = context.auth
+          if (user.staff.role !== StaffRole.DIRECTOR && user.staff.role !== StaffRole.MANAGER)  throw new Error("You are not authorized to access this page")
+      },
+      errorComponent: ({error}) => {
+          return <CustomErrorComponent errorMessage={error.message} />;
+      }
   },
 )
 

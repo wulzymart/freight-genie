@@ -1,13 +1,14 @@
 import {Customer, CustomerType, ItemType, Order, State, Station, TypePricing} from "@/lib/custom-types";
 import {Box, Building, DollarSign, FileText, Globe, Hash, MapPin, Phone, User} from 'lucide-react';
 import {useSuspenseQuery} from "@tanstack/react-query";
-import {getStatesWithLgas} from "@/lib/queries/states.ts";
-import {getStations} from "@/lib/queries/stations.ts";
 import {getCustomerById} from "@/lib/queries/customer.ts";
 import {getItemTypes} from "@/lib/queries/item-types.ts";
+import {useLoaderData} from "@tanstack/react-router";
 
 
 const WaybillInvoice = ({order}: {order: Partial<Order>}) => {
+  const {stations, statesLGAs} = useLoaderData({from: '/_authenticated'})
+  const vendor = useLoaderData({from: '__root__'})
   // Sample data with new fields
   const data = {
     companyInfo: {
@@ -54,40 +55,33 @@ const WaybillInvoice = ({order}: {order: Partial<Order>}) => {
     processedBy: "Alex Johnson",
     processedDate: "2024-11-19 14:30"
   };
-  const {
-    data: statesLGAs,
-    isLoading: statesLGAsLoading,
-    isError: statesLGAsError,
-  } = useSuspenseQuery(getStatesWithLgas);
-  const {
-    data: stations,
-    isLoading: stationsLoading,
-    isError: stationsError,
-  } = useSuspenseQuery(getStations);
+
   const {
     data: itemTypes,
     isError: typesError,
     isLoading: typesLoading,
-  } = useSuspenseQuery(getItemTypes);
+  } = useSuspenseQuery(getItemTypes)
+  const vendorHq= stations.find((s) => s.id === vendor.config?.hqId)
+  const vendorHqState = statesLGAs.find((s) => s.id === vendorHq?.stateId)
   const {data:customer}: {data: Customer} = useSuspenseQuery(getCustomerById(order.customerId!));
   const originStation = stations.find((station: Station) => station.id === order.originStationId!);
   const destinationStation = stations.find((station: Station) => station.id === order.destinationStationId || order.destinationRegionStationId );
-  const customerState: State = statesLGAs.find((state: State) => state.id === customer.address.stateId);
-  const receiverState: State = statesLGAs.find((state: State) => state.id === order.receiver?.address.stateId);
-  if (statesLGAsLoading || stationsLoading || typesLoading)  return <p>Gathering data...</p>
-  if (statesLGAsError || stationsError || typesError)  return <p>Error Gathering data...</p>
+  const customerState = statesLGAs.find((state: State) => state.id === customer.address.stateId);
+  const receiverState = statesLGAs.find((state: State) => state.id === order.receiver?.address.stateId);
+  if (typesLoading)  return <p>Gathering data...</p>
+  if (typesError)  return <p>Error Gathering data...</p>
   const  type: ItemType = itemTypes.find((type: ItemType) => type.name === order.item?.type);
   return (
       <div className="w-[210mm] h-[148mm] bg-white p-6 font-sans text-sm">
         {/* Header Section */}
         <div className="border-b-2 border-gray-200 pb-4">
           <div className="flex justify-between items-center">
-            <img src={data.companyInfo.logo} alt="Company Logo" className="h-12" />
+            <img src={vendor.logo || '/freight-genie-logo.png'} alt="Company Logo" className="h-12" />
             <div className="text-right">
-              <h1 className="text-xl font-bold text-gray-800">{data.companyInfo.name}</h1>
-              <p className="text-gray-600 text-xs">{data.companyInfo.address}</p>
+              <h1 className="text-xl font-bold text-gray-800">{vendor.companyName}</h1>
+              <p className="text-gray-600 text-xs">{`${vendorHq?.address} ${vendorHqState?.name}`}</p>
               <div className="flex flex-col text-xs text-gray-600">
-                {data.companyInfo.customerCare.map((number, index) => (
+                {vendor.config?.customerCareLine.split(' ').map((number, index) => (
                     <span key={index}>☎ {number}</span>
                 ))}
               </div>
@@ -154,7 +148,7 @@ const WaybillInvoice = ({order}: {order: Partial<Order>}) => {
               </p>
               <p className="text-xs flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
-                {customer.address.address}, {customerState.name}
+                {customer.address.address}, {customerState?.name}
               </p>
             </div>
           </div>
@@ -172,7 +166,7 @@ const WaybillInvoice = ({order}: {order: Partial<Order>}) => {
               </p>
               <p className="text-xs flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
-                {order.receiver?.address.address}, {receiverState.name}
+                {order.receiver?.address.address}, {receiverState?.name}
               </p>
             </div>
           </div>
@@ -196,10 +190,10 @@ const WaybillInvoice = ({order}: {order: Partial<Order>}) => {
                       <p className="text-gray-600 text-xs">Weight</p>
                       <p className="font-semibold">{order.item?.weight}KG</p>
                     </div>
-                    <div>
+                    {(order.item?.height && order.item?.width && order.item?.length) ? <div>
                       <p className="text-gray-600 text-xs">Dimensions</p>
                       <p className="font-semibold">{order.item?.length}x{order.item?.width}x{order.item?.height}cm</p>
-                    </div>
+                    </div>: ''}
                   </>
               )}
               <div>
@@ -228,21 +222,19 @@ const WaybillInvoice = ({order}: {order: Partial<Order>}) => {
         <div className="mt-4 border-t border-gray-200 pt-2">
           <div className="grid grid-cols-5 gap-4">
             <div className="col-span-2">
-              <p className="text-xs text-gray-600">Processed By</p>
-              <p className="font-semibold">{data.processedBy}</p>
               <p className="text-xs text-gray-600 mt-1">Processed Date</p>
-              <p className="font-semibold">{data.processedDate}</p>
+              <p className="font-semibold">{(order.createdAt? new Date(order.createdAt) : new Date()).toLocaleDateString()}</p>
             </div>
             <div className='mt-10'>
-              <p className="text-xs text-gray-600 border-t border-gray-300 pt-1">Staff Signature</p>
+              <p className="text-xs text-gray-800 border-t border-gray-600 pt-1">Staff Signature & Stamp</p>
               <div className="h-8 mt-1"></div>
             </div>
             <div className='mt-10'>
-              <p className="text-xs text-gray-600 border-t border-gray-300 pt-1">Customer Signature</p>
+              <p className="text-xs text-gray-800 border-t border-gray-600 pt-1">Customer Signature</p>
               <div className="h-8 mt-1"></div>
             </div>
             <div className='mt-10'>
-              <p className="text-xs text-gray-600 border-t border-gray-300 pt-1">Receiver Signature</p>
+              <p className="text-xs text-gray-800 border-t border-gray-600 pt-1">Receiver Signature</p>
               <div className="h-8 mt-1"></div>
             </div>
           </div>

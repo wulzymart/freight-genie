@@ -18,8 +18,9 @@ import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} 
 import TitleCard from "@/components/page-components/title";
 import {useMutation} from "@tanstack/react-query";
 import {axiosInstance} from "@/lib/axios";
-import {Lga, State, Station, StationType} from "@/lib/custom-types";
+import {Lga, StaffRole, State, Station, StationType} from "@/lib/custom-types";
 import {useToast} from "@/hooks/use-toast";
+import {CustomErrorComponent} from "@/components/error-component.tsx";
 export const Route = createFileRoute("/_authenticated/stations/add")({
   component: () => (
     <main className="grid gap-8">
@@ -30,6 +31,13 @@ export const Route = createFileRoute("/_authenticated/stations/add")({
       <StationForm />
     </main>
   ),
+  beforeLoad: ({context}) => {
+    const {user} = context.auth
+    if (user.staff.role !== StaffRole.DIRECTOR) throw new Error("You are not authorized to access this page")
+  },
+  errorComponent: ({error}) => {
+    return <CustomErrorComponent errorMessage={error.message} />;
+  }
 });
 const StationForm = () => {
   const {stations, statesLGAs} = useLoaderData({from: '/_authenticated'})
@@ -155,19 +163,19 @@ const StationForm = () => {
                         <Select
                           onValueChange={(value) => {
                             field.onChange(value);
-                            setLgas(getLGAs(+value));
+                            setLgas(getLGAs(+value)!);
                             form.resetField("lgaId");
                             setStationName(
                               type,
                               undefined,
-                              statesLGAs.find(
+                              ''+statesLGAs.find(
                                 (state: State) => state.id === +field.value
-                              )
+                              )?.id
                             );
                           }}
                           // defaultValue={+field.value}
                           value={
-                            statesLGAs.find(
+                            ''+statesLGAs.find(
                               (state: State) => state.id === +field.value
                             )?.id
                           }

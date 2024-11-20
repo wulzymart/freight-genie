@@ -1,13 +1,14 @@
 import * as React from "react";
 import { jwtDecode } from "jwt-decode";
 import { axiosInstance } from "@/lib/axios";
+import {User} from "@/lib/custom-types.ts";
 
 export interface AuthContext {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  user: any;
-  setUser: React.Dispatch<React.SetStateAction<any>>;
+  user: User;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   token: string | null;
 }
 

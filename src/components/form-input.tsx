@@ -22,6 +22,8 @@ const FormInput = ({
   disabled,
     capitalize,
   description,
+    min, max,
+    ...others
 }: {
   control?: Control<any>;
   name: string;
@@ -34,6 +36,9 @@ const FormInput = ({
   capitalize?: boolean
   disabled?: boolean;
   description?: string;
+  min?: number;
+  max?: number;
+  others?: any
 }) => {
   return (
     <FormField
@@ -61,6 +66,9 @@ const FormInput = ({
                 }
                 placeholder={placeholder}
                 className={inputClass}
+                min ={min}
+                max = {max}
+                {...others}
               />
               <span className="text-sm font-light text-gray-700">
                 {message}

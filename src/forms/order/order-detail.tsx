@@ -11,6 +11,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 import FormTextarea from "@/components/form-textarea.tsx";
 import {Button} from "@/components/ui/button.tsx";
 
+
 export function OrderDetailForm({
                                     customerId,
                                     deliveryDetails,
@@ -18,6 +19,9 @@ export function OrderDetailForm({
     customerId: string;
     deliveryDetails?: z.infer<typeof orderSchema.shipmentInfoSchema>;
 }) {
+    const {
+        stations, statesLGAs, staffStationId, staffState
+    } = useLoaderData({from: '/_authenticated'});
     const form = useForm<z.infer<typeof orderSchema.shipmentInfoSchema>>({
         resolver: zodResolver(orderSchema.shipmentInfoSchema),
         defaultValues: deliveryDetails || {
@@ -25,25 +29,24 @@ export function OrderDetailForm({
             deliveryType: DeliveryType.STATION_TO_STATION,
             stationOperation: StationOperation.LOCAL,
             interStationOperation: undefined,
-            originStationId: "",
+            originStationId: staffStationId || '',
             originAddress: undefined,
         },
     });
     const stationOperation = form.watch("stationOperation");
     const deliveryType = form.watch("deliveryType");
 
-    const {
-        stations, statesLGAs,
-    } = useLoaderData({from: '/_authenticated'});
 
-    const [state, setState] = useState<State | null>(null);
+
+
+    const [state, setState] = useState<State | undefined>(staffState);
     const navigate = useNavigate();
 
     const stateStations = stations.filter(
         (station: Station) => station.stateId === state?.id
     );
-    const onSubmit = () => {
-        navigate({
+    const onSubmit = async () => {
+        await navigate({
             to: "/orders/new",
             search: {
                 customerId,
@@ -241,6 +244,7 @@ export function OrderDetailForm({
                                     }}
                                     // defaultValue={+field.value}
                                     value={state?.id as unknown as string}
+                                    disabled={!!staffState}
                                 >
                                     <SelectTrigger className="">
                                         {state ? (
@@ -275,6 +279,7 @@ export function OrderDetailForm({
                                                 onValueChange={field.onChange}
                                                 defaultValue={field.value}
                                                 value={field.value}
+                                                disabled={!!staffStationId}
                                             >
                                                 <SelectTrigger className="w-full">
                                                     <SelectValue placeholder="Select Station"/>

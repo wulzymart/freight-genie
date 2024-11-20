@@ -41,7 +41,7 @@ import {
   RouteType,
   Station,
   StationType,
-  State,
+  State, StaffRole,
 } from "@/lib/custom-types";
 import { useToast } from "@/hooks/use-toast";
 import { getStations } from "@/lib/queries/stations";
@@ -54,6 +54,7 @@ import {
 import { MdAdd, MdDragHandle } from "react-icons/md";
 import { TrashIcon } from "lucide-react";
 import { getRoutes } from "@/lib/queries/routes";
+import {CustomErrorComponent} from "@/components/error-component.tsx";
 
 export const Route = createFileRoute("/_authenticated/routes/add")({
   loader: async ({ context: { queryClient } }) => {
@@ -70,6 +71,13 @@ export const Route = createFileRoute("/_authenticated/routes/add")({
       <RouteForm />
     </main>
   ),
+  beforeLoad: ({context}) => {
+    const {user} = context.auth
+    if (user.staff.role !== StaffRole.DIRECTOR && user.staff.role !== StaffRole.MANAGER)  throw new Error("You are not authorized to access this page")
+  },
+  errorComponent: ({error}) => {
+    return <CustomErrorComponent errorMessage={error.message} />;
+  }
 });
 
 function RouteForm() {
@@ -283,7 +291,7 @@ function RouteForm() {
                     const state = statesLGAs.find(
                       (state: State) => state.id === +value
                     );
-                    setOriginState(state);
+                    setOriginState(state || null);
                     setStateId(+value);
                   }}
                   disabled={statesLGAsError || statesLGAsLoading}
@@ -320,7 +328,7 @@ function RouteForm() {
                       const state = statesLGAs.find(
                         (state: State) => state.id === +value
                       );
-                      setDestinationState(state);
+                      setDestinationState(state || null);
                     }}
                     value={destinationState?.id as unknown as string}
                   >

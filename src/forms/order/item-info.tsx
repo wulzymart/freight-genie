@@ -239,6 +239,8 @@ export function ItemForm({
                                     type="number"
                                     label="Weight"
                                     name="weight"
+                                    min = {selectedType.min}
+                                    max = {selectedType.limit}
                                 />
                             )}
                         </div>
@@ -295,6 +297,13 @@ export function ItemForm({
                             <Button
                                 type="button"
                                 onClick={() => {
+                                    const weight = form.getValues().weight
+                                    if (selectedType!.pricing === TypePricing.PER_KG && weight) {
+
+                                        if ((selectedType.limit && (weight > selectedType.limit!) || (selectedType.min && weight < selectedType.min!))) {
+                                            return alert('Item weight and Item type are not compatible, Please change the type')
+                                        }
+                                    }
                                     form.handleSubmit(onSubmit, () =>
                                         console.log(form.formState.errors)
                                     )();

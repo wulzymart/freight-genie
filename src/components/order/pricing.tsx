@@ -82,9 +82,9 @@ export function Pricing({
     const {toast} = useToast()
     const navigate = useNavigate();
     const onSubmit = () => {
-        mutate(order, {onSuccess: (data: ApiResponseType) => {
+        mutate(order, {onSuccess: async (data: ApiResponseType) => {
             toast({description: data.message})
-                navigate({})
+                await  navigate({to: `/orders/${data.order.id}/payment`})
             }, onError: (error) => {
             toast({description: error.message, variant: 'destructive'})
             }})
@@ -173,7 +173,7 @@ export function Pricing({
                     action={() => onSubmit()}
                 />
                 <Dialog>
-                    <DialogTrigger className='w-full'>
+                    <DialogTrigger className='w-fit' asChild>
                         <Button variant="outline">View Waybill Summary</Button>
                     </DialogTrigger>
                     <DialogContent className="">

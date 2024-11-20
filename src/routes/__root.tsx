@@ -9,6 +9,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { VendorContextType } from "@/hooks/vendor";
 import { AuthContextType } from "@/hooks/auth-context";
 import { Toaster } from "@/components/ui/toaster";
+import {CustomErrorComponent} from "@/components/error-component.tsx";
 type RouterContext = {
   auth: AuthContextType;
   vendor: VendorContextType;
@@ -33,4 +34,5 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       </React.Suspense>
     </React.Fragment>
   ),
+  errorComponent: ({error}) => <CustomErrorComponent errorMessage={error.message}/>
 });

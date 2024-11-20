@@ -1,56 +1,26 @@
 import {createFileRoute, Link, useLoaderData, useNavigate} from "@tanstack/react-router";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {useForm} from "react-hook-form";
 import * as z from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { zodSearchValidator } from "@tanstack/router-zod-adapter";
-import { Button } from "@/components/ui/button";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {zodSearchValidator} from "@tanstack/router-zod-adapter";
+import {Button} from "@/components/ui/button";
 
-import {
-  officeStaffSchema,
-  staffFormSchema,
-  tripStaffSchema,
-  userFormSchema,
-} from "@/lib/zodSchemas";
-import FormInput from "@/components/form-input";
+import {officeStaffSchema, staffFormSchema, tripStaffSchema, userFormSchema,} from "@/lib/zodSchemas";
 import ConfirmPin from "@/components/confirm-pin";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import {
-  ApiResponseType,
-  OperationEnum,
-  RouteCoverage,
-  RouteType,
-  StaffRole,
-  State,
-  UserRole,
-} from "@/lib/custom-types";
+import {Card, CardContent, CardFooter, CardHeader,} from "@/components/ui/card";
+import {OperationEnum, RouteCoverage, RouteType, StaffRole, State,} from "@/lib/custom-types";
 import TitleCard from "@/components/page-components/title";
-import { getStations } from "@/lib/queries/stations";
-import { getStatesWithLgas } from "@/lib/queries/states";
-import { getRoutes } from "@/lib/queries/routes";
-import { useState } from "react";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { axiosInstance } from "@/lib/axios";
-import { useToast } from "@/hooks/use-toast";
+import {getRoutes} from "@/lib/queries/routes";
+import {useState} from "react";
+import {useMutation, useSuspenseQuery} from "@tanstack/react-query";
+import {axiosInstance} from "@/lib/axios";
+import {useToast} from "@/hooks/use-toast";
+import {CustomErrorComponent} from "@/components/error-component.tsx";
+import {StaffForm} from "@/forms/staff/main.tsx";
+import {OfficePersonnelForm} from "@/forms/staff/office-personnel.tsx";
+
 const StaffAddSearchSchema = z.object({
   page: z.optional(z.enum(["office", "field"])),
   user: z.optional(userFormSchema),
@@ -63,6 +33,13 @@ const validatePin = () => {
   (document.getElementById("staff-reg") as HTMLDialogElement)?.click();
 };
 export const Route = createFileRoute("/_authenticated/staff/add")({
+  beforeLoad: ({context}) => {
+    const {user} = context.auth
+    if (user.staff.role !== StaffRole.DIRECTOR) throw new Error("You are not authorized to access this page")
+  },
+  errorComponent: ({error}) => {
+    return <CustomErrorComponent errorMessage={error.message} />;
+  },
   loader: async ({ context: { queryClient } }) => {
     await queryClient.ensureQueryData(getRoutes);
   },
@@ -81,9 +58,9 @@ const Page = () => {
   const { page, user, staff } = Route.useSearch();
   if (!page) return <StaffForm user={user} staff={staff} />;
   if (page === "office" && staff && user)
-    return <OfficePersonelForm staff={staff} user={user} />;
+    return <OfficePersonnelForm staff={staff} user={user} />;
   if (page === "field" && staff && user)
-    return <FieldPersonelForm staff={staff} user={user} />;
+    return <FieldPersonnelForm staff={staff} user={user} />;
   return (
     <Card>
       <CardHeader></CardHeader>
@@ -101,315 +78,8 @@ const Page = () => {
     </Card>
   );
 };
-const StaffForm = ({
-  user,
-  staff,
-}: {
-  user?: z.infer<typeof userFormSchema>;
-  staff?: z.infer<typeof staffFormSchema>;
-}) => {
-  const {} = Route.useSearch();
-  const staffForm = useForm<z.infer<typeof staffFormSchema>>({
-    resolver: zodResolver(staffFormSchema),
-    defaultValues: staff || {
-      firstname: "",
-      lastname: "",
-      role: StaffRole.STATION_OFFICER,
-      phoneNumber: "",
-    },
-  });
-  const userForm = useForm<z.infer<typeof userFormSchema>>({
-    resolver: zodResolver(userFormSchema),
-    defaultValues: user || {
-      username: "",
-      email: "",
-      role: UserRole.STAFF,
-    },
-  });
-  const navigate = useNavigate();
 
-  const onSubmit = () => {
-    staffForm.handleSubmit(() =>
-      userForm.handleSubmit(() => {
-        const user = userForm.getValues();
-        const staff = staffForm.getValues();
-
-        navigate({
-          to: "/staff/add",
-          search: {
-            page: officeRoles.includes(staff.role) ? "office" : "field",
-            user,
-            staff,
-          },
-        });
-      })()
-    )();
-  };
-  return (
-    <div>
-      <Card className="w-full">
-        <CardHeader></CardHeader>
-        <CardContent className="grid gap-4">
-          <Form {...staffForm}>
-            <form>
-              <div className="grid grid-cols-2 gap-4">
-                <FormInput
-                  control={staffForm.control}
-                  type="text"
-                  label="First Name"
-                  name="firstname"
-                  capitalize={true}
-                  placeholder="e.g John"
-                />
-                <FormInput
-                  control={staffForm.control}
-                  type="text"
-                  label="Last Name"
-                  name="lastname"
-                  placeholder="e.g Conor"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormInput
-                  control={staffForm.control}
-                  type="text"
-                  label="Phone Number"
-                  name="phoneNumber"
-                  placeholder="e.g +2348123456789"
-                />
-                <FormField
-                  control={staffForm.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel>Staff Role</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          value={field.value}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.values(StaffRole).map((role: StaffRole) => (
-                              <SelectItem key={role} value={role}>
-                                {role}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </form>
-          </Form>
-          <Form {...userForm}>
-            <form>
-              <div className="grid grid-cols-2 gap-4">
-                <FormInput
-                  control={userForm.control}
-                  type="email"
-                  label="Email"
-                  name="email"
-                  placeholder="e.g user@example.com"
-                />
-                <FormInput
-                  control={userForm.control}
-                  type="text"
-                  label="Username"
-                  name="username"
-                  placeholder="e.g Conor"
-                />
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button type="button" onClick={onSubmit}>
-            Next
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
-  );
-};
-
-const OfficePersonelForm = ({
-  user,
-  staff,
-}: {
-  user: z.infer<typeof userFormSchema>;
-  staff: z.infer<typeof staffFormSchema>;
-}) => {
-  const {
-    data: statesLGAs,
-    isLoading: statesLGAsLoading,
-    isError: statesLGAsError,
-  } = useSuspenseQuery(getStatesWithLgas);
-  const {
-    data: stations,
-    isLoading: stationsLoading,
-    isError: stationsError,
-  } = useSuspenseQuery(getStations);
-  const [state, setState] = useState<State | null>(null);
-  const stateStations = stations.filter(
-    (station) => station.stateId === state?.id
-  );
-  const form = useForm<z.infer<typeof officeStaffSchema>>({
-    resolver: zodResolver(officeStaffSchema),
-    defaultValues: {
-      stationId: "",
-    },
-  });
-  const { mutate } = useMutation({
-    mutationKey: ["staff"],
-    mutationFn: async (values: {
-      user: z.infer<typeof userFormSchema>;
-      staff: z.infer<typeof staffFormSchema>;
-      officePersonnelInfo: z.infer<typeof officeStaffSchema>;
-    }) => {
-      if (!values) throw Error;
-      const { data }: { data: ApiResponseType } = await axiosInstance.post(
-        "/vendor/users",
-        values
-      );
-      if (!data.success) throw Error(data.message);
-      return data;
-    },
-  });
-  const { toast } = useToast();
-  function onSubmit() {
-    form.handleSubmit(validatePin)();
-  }
-  const navigate = useNavigate();
-  function submit() {
-    mutate(
-      { user, staff, officePersonnelInfo: form.getValues() },
-      {
-        onSuccess: (data) => {
-          form.reset();
-          toast({
-            description: data.message,
-          });
-          navigate({ to: "/staff/add" });
-        },
-        onError: (data) => {
-          toast({
-            description: data.message,
-            variant: "destructive",
-          });
-        },
-      }
-    );
-  }
-
-  return (
-    <Form {...form}>
-      <Card>
-        <CardHeader></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-3">
-              <FormLabel>State</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  const state = statesLGAs.find(
-                    (state: State) => state.id === +value
-                  );
-                  setState(state);
-                  form.resetField("stationId");
-                }}
-                disabled={statesLGAsError || statesLGAsLoading}
-                // defaultValue={+field.value}
-                value={state?.id as unknown as string}
-              >
-                <SelectTrigger className="">
-                  {state ? (
-                    <SelectValue
-                      placeholder="Select State"
-                      className="w-full"
-                    />
-                  ) : (
-                    "Select State"
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  {statesLGAs.map((state: State) => (
-                    <SelectItem
-                      key={state.id}
-                      value={state.id as unknown as string}
-                    >
-                      {state.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <FormField
-              control={form.control}
-              name="stationId"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel>Staff Station</FormLabel>
-                  <FormControl>
-                    <Select
-                      disabled={!state || stationsLoading || stationsError}
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select Station" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stateStations.map((station) => (
-                          <SelectItem key={station.id} value={station.id!}>
-                            {station.name} ({station.nickName})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <div className="w-full flex justify-center gap-10">
-            <Button
-              variant="ghost"
-              type="button"
-              onClick={() => {
-                navigate({
-                  to: "/staff/add",
-                  search: {
-                    user,
-                    staff,
-                  },
-                });
-              }}
-            >
-              Back
-            </Button>
-            <Button type="button" onClick={onSubmit}>
-              Submit
-            </Button>
-            <ConfirmPin id="staff-reg" name="Add staff" action={submit} />
-          </div>
-        </CardFooter>
-      </Card>
-    </Form>
-  );
-};
-
-const FieldPersonelForm = ({
+const FieldPersonnelForm = ({
   user,
   staff,
 }: {
@@ -417,7 +87,7 @@ const FieldPersonelForm = ({
   staff: z.infer<typeof staffFormSchema>;
 }) => {
   const {stations, statesLGAs} = useLoaderData({from: '/_authenticated'})
-  const [state, setState] = useState<State | null>(null);
+  const [state, setState] = useState<State | undefined>(undefined);
   const stateStations = stations.filter(
     (station) => station.stateId === state?.id
   );
@@ -427,25 +97,28 @@ const FieldPersonelForm = ({
     isError: routesError,
   } = useSuspenseQuery(getRoutes);
 
-  const [coverage, setCoverage] = useState<RouteCoverage>(
-    RouteCoverage.INTERSTATE
-  );
-  const [routeType, setRouteType] = useState<RouteType>(RouteType.REGULAR);
-  const possibleRoutes = routes.filter(
-    (route) => route.type === routeType && route.coverage === coverage
-  );
+
   const form = useForm<z.infer<typeof tripStaffSchema>>({
     resolver: zodResolver(tripStaffSchema),
     defaultValues: {
       currentStationId: "",
       registeredRouteId: "" as any,
       operation: OperationEnum.INTERSTATION,
+      routeCoverage: RouteCoverage.INTERSTATE,
+      routeType: RouteType.REGULAR,
     },
   });
+  const routeType= form.watch('routeType');
+  const coverage = form.watch('routeCoverage')
+  const possibleRoutes = routes.filter(
+      (route) => route === routeType && route.coverage === coverage
+  );
   const fieldPersonnel =
     staff.role === StaffRole.DRIVER ? "Driver" : "Assistant";
   const operation = form.watch("operation");
   const selectedRouteId = form.watch("registeredRouteId");
+  const selectedRoute = possibleRoutes.find((route) => route.id=== selectedRouteId);
+  const stationsList = selectedRoute?.stationIds.map(id => stations.find((station) => station.id === id));
   const { mutate } = useMutation({
     mutationKey: ["staff"],
     mutationFn: async (values: {
@@ -481,14 +154,14 @@ const FieldPersonelForm = ({
           values,
       },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
           console.log("success", data);
 
           form.reset();
           toast({
             description: data.message,
           });
-          navigate({ to: "/staff/add" });
+          await navigate({ to: "/staff/add" });
         },
         onError: (data) => {
           toast({
@@ -519,6 +192,7 @@ const FieldPersonelForm = ({
                           field.onChange(value);
                           form.resetField("registeredRouteId");
                           form.resetField("currentStationId");
+                          value === OperationEnum.LASTMAN && form.resetField('routeCoverage')
                         }}
                         defaultValue={field.value}
                         value={field.value}
@@ -541,65 +215,68 @@ const FieldPersonelForm = ({
               />
               {operation === OperationEnum.INTERSTATION ? (
                 <>
-                  <div className="flex flex-col gap-3">
-                    <FormLabel>{fieldPersonnel} Coverage</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        setCoverage(value as RouteCoverage);
-                      }}
-                      // defaultValue={+field.value}
-                      value={coverage}
-                    >
-                      <SelectTrigger className="">
-                        {coverage ? (
-                          <SelectValue
-                            placeholder="Select Coverage"
-                            className="w-full"
-                          />
-                        ) : (
-                          "Select Coverage"
-                        )}
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.values(RouteCoverage).map(
-                          (coverage: RouteCoverage) => (
-                            <SelectItem key={coverage} value={coverage}>
-                              {coverage}
-                            </SelectItem>
-                          )
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <FormLabel>{fieldPersonnel} Route Type</FormLabel>
-                    <Select
-                      onValueChange={(value) => {
-                        setRouteType(value as RouteType);
-                        form.resetField('registeredRouteId');
-                      }}
-                      // defaultValue={+field.value}
-                      value={routeType}
-                    >
-                      <SelectTrigger className="">
-                        {routeType ? (
-                          <SelectValue
-                            placeholder="Select Type"
-                            className="w-full"
-                          />
-                        ) : (
-                          "Select Type"
-                        )}
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.values(RouteType).map((type: RouteType) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <FormField
+                      control={form.control}
+                      name="routeCoverage"
+                      render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormLabel>{fieldPersonnel}'s Coverage</FormLabel>
+                            <FormControl>
+                              <Select
+                                  onValueChange={(value) => {
+                                    field.onChange(value);
+                                    form.resetField('registeredRouteId')
+                                  }}
+                                  defaultValue={field.value}
+                                  value={field.value}
+                              >
+                                <SelectTrigger className="w-full">
+                                  {field.value? field.value.toUpperCase(): <SelectValue placeholder="Select Coverage"/>}
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.values(RouteCoverage).map((coverage) => (
+                                      <SelectItem key={coverage} value={coverage}>
+                                        {coverage.toUpperCase()}
+                                      </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="routeType"
+                      render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormLabel>{fieldPersonnel}'s Route Type</FormLabel>
+                            <FormControl>
+                              <Select
+                                  onValueChange={(value) => {
+                                    field.onChange(value);
+                                    form.resetField('registeredRouteId')
+                                  }}
+                                  defaultValue={field.value}
+                                  value={field.value}
+                              >
+                                <SelectTrigger className="w-full">
+                                  {field.value? field.value.toUpperCase(): <SelectValue placeholder="Select Type"/>}
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.values(RouteType).map((type) => (
+                                      <SelectItem key={type} value={type}>
+                                        {coverage.toUpperCase()}
+                                      </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                      )}
+                  />
 
                   <FormField
                     control={form.control}
@@ -632,6 +309,35 @@ const FieldPersonelForm = ({
                         <FormMessage />
                       </FormItem>
                     )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name={"currentStationId"}
+                      render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormLabel>Current Station</FormLabel>
+                            <FormControl>
+                              <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                  value={field.value}
+                                  disabled={!stations}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select Station" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {stationsList?.map((station) => (
+                                      station ?<SelectItem key={station.id} value={station.id!}>
+                                        {station.name} ({station.nickName})
+                                      </SelectItem>: ''
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                      )}
                   />
                 </>
               ) : (
@@ -715,8 +421,8 @@ const FieldPersonelForm = ({
               <Button
                 variant="ghost"
                 type="button"
-                onClick={() => {
-                  navigate({
+                onClick={async () => {
+                  await navigate({
                     to: "/staff/add",
                     search: {
                       user,

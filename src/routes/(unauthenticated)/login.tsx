@@ -1,5 +1,4 @@
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-("use client");
+import { createFileRoute, redirect, useRouter, useLoaderData } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -117,15 +116,23 @@ export const Route = createFileRoute("/(unauthenticated)/login")({
       throw redirect({ to: "/dashboard" });
     }
   },
-  component: () => (
-    <section className="w-full flex flex-col items-center justify-center h-screen gap-y-6">
-      <img
-        alt="Freight Genie logo"
-        src="/freight-genie-logo.png"
-        height={100}
-        width={100}
-      />
-      <LoginForm />
-    </section>
-  ),
+  component: () => {
+      const {logo} = useLoaderData({from: '__root__'})
+     return <section className="w-full flex flex-col items-center justify-center h-screen gap-y-6">
+         <div className="flex gap-4 w-fit items-center justify-center">
+             <img
+                 alt="Freight Genie logo"
+                 src="/freight-genie-logo.png"
+                 height={100}
+                 width={100}
+             />{logo && <img
+             alt="Company Logo"
+             src={logo}
+             height={100}
+             width={100}
+         />}
+         </div>
+         <LoginForm/>
+     </section>
+  },
 });

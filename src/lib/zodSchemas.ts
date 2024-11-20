@@ -168,6 +168,8 @@ export const tripStaffSchema = z
     currentStationId: z.string(),
     registeredRouteId: z.string().transform((x) => parseInt(x)),
     operation: z.enum(Object.values(OperationEnum) as any),
+    routeCoverage: z.optional(z.enum(Object.values(RouteCoverage) as any)),
+    routeType: z.optional(z.enum(Object.values(RouteType) as any))
   })
   .superRefine(({ operation, registeredRouteId }, ctx) => {
     if (operation === OperationEnum.INTERSTATION && !registeredRouteId)

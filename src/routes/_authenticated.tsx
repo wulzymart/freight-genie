@@ -1,108 +1,64 @@
 import {
   createFileRoute,
-  Link,
   Outlet,
-  redirect,
-  useRouter,
+  redirect, useLoaderData,
 } from "@tanstack/react-router";
-import { Search } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import Sidebar from "@/components/layout-components/menu/sidebar";
-import MobileMenu from "@/components/layout-components/menu/mobile-menu";
-import AppBreadCrumb from "@/components/layout-components/bread-crumb";
-import { getStoredUser, useAuth } from "@/hooks/auth-context";
-import { useCallback } from "react";
+import { getStoredUser} from "@/hooks/auth-context";
 import {getStatesWithLgas} from "@/lib/queries/states.ts";
 import {getStations} from "@/lib/queries/stations.ts";
+import {SidebarInset, SidebarProvider, SidebarTrigger} from "@/components/ui/sidebar.tsx";
+import {AppSidebar} from "@/components/app-sidebar.tsx";
+import {Separator} from "@/components/ui/separator.tsx";
+import {User} from "@/lib/custom-types.ts";
+
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: ({ context }) => {
     const { setUser } = context.auth;
     const user = getStoredUser();
     if (user) {
-      setUser(user);
+      setUser(user as User);
     } else {
       throw redirect({ to: "/login" });
     }
   },
-  loader: async ({context: {queryClient}}) => {
+  loader: async ({context: {queryClient, auth: {user: {staff}}}}) => {
     const statesLGAs = await  queryClient.ensureQueryData(getStatesWithLgas)
         const stations = await queryClient.ensureQueryData(getStations)
+    const staffStationId = staff.officePersonnelInfo?.stationId
+    const staffState =  statesLGAs.find(state => state.id === stations.find(station => station.id === staffStationId)?.stateId);
     return {
       statesLGAs,
-      stations
+      stations,
+      staffState,
+      staffStationId
     }
   },
-  component: PanelLayout,
+  component: PageLayout,
 });
 
-export function PanelLayout() {
-  const navigate = Route.useNavigate();
-  const router = useRouter();
-  const { logout } = useAuth();
-  const signOut = useCallback(() => {
-    logout();
-    router.invalidate();
-    navigate({ to: "/login" });
-  }, []);
+function PageLayout() {
+  const vendor = useLoaderData({from:'__root__'})
   return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40 overflow-auto">
-      <Sidebar />
-      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-          <MobileMenu />
-          <AppBreadCrumb />
-          <div className="relative ml-auto flex-1 md:grow-0">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
-            />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="overflow-hidden rounded-full"
-              >
-                <img
-                  src="/avatar.svg"
-                  width={36}
-                  height={36}
-                  alt="Avatar"
-                  className="overflow-hidden rounded-full"
-                />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Link to="/user/security">Security</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut}>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </header>
-        <div className="px-6">
-          <Outlet />
-        </div>
-      </div>
-    </div>
-  );
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 pr-4">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1"/>
+              <Separator orientation="vertical" className="mr-2 h-4"/>
+            </div>
+            <div className="flex justify-end gap-8 w-full">
+              <div className='flex flex-col'>
+                <p className='text-lg font-bold text-primary'>{vendor.companyName}</p>
+                <small>{vendor.address}</small>
+              </div>
+              {vendor.logo && <img src={vendor.logo} alt="logo" width={50} height={50}/>}
+            </div>
+          </header>
+          <Outlet/>
+        </SidebarInset>
+      </SidebarProvider>
+  )
 }

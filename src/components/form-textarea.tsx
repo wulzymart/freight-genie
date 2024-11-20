@@ -21,6 +21,7 @@ const FormTextarea = ({
                           disabled,
                           capitalize,
                           description,
+    ...others
 }: {
     control?: Control<any>;
     name: string;
@@ -33,6 +34,7 @@ const FormTextarea = ({
     capitalize?: boolean
     disabled?: boolean;
     description?: string;
+    others?: any
 }) => {
   return (
     <FormField
@@ -53,7 +55,7 @@ const FormTextarea = ({
 
                       field.onChange(value)
                   }
-                  } placeholder={placeholder}/>
+                  } placeholder={placeholder} {...others}/>
               </FormControl>
               <span className="text-sm font-light text-gray-700">
                 {message}
