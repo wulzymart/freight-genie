@@ -10,7 +10,7 @@ import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {ngPhoneNumberSchema} from "@/lib/zodSchemas.ts";
 
-export function Prompt() {
+export function Prompt({returnPage}: {returnPage: 'order'| 'corporate'}) {
     const {toast} = useToast();
     const navigate = useNavigate();
     const [newCustomer, setNewCustomer] = useState<NewCustomerType>("Yes");
@@ -23,12 +23,12 @@ export function Prompt() {
     };
     const handleClick = (newCustomer: NewCustomerType) => {
         if (newCustomer === "Yes") {
-            navigate({to: "/customers/add", search: {newOrder: true}});
+            navigate({to: "/customers/add", search: {returnPage}});
         } else {
             getCustomer(phoneNumber).then((data) => {
                 if (data.success) {
                     navigate({
-                        to: "/orders/new",
+                        to: returnPage === 'order' ? "/orders/new" : '/customers/corporate/add',
                         search: {customerId: data.customer.id, page: "detail"},
                     });
                 } else {

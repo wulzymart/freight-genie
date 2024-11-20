@@ -10,7 +10,6 @@ import { LucideIcon } from "lucide-react";
 
 import { ReactElement } from "react";
 import { IconType } from "react-icons/lib";
-import { MdDomainAdd } from "react-icons/md";
 
 export default function MenuItem({
   name,

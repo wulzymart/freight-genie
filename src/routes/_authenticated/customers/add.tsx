@@ -1,5 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-("use client");
+import {createFileRoute, useLoaderData, useNavigate} from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -36,19 +35,14 @@ import {
 } from "@/components/ui/card";
 import { ApiResponseType, State } from "@/lib/custom-types";
 import TitleCard from "@/components/page-components/title";
-import { getStatesWithLgas } from "@/lib/queries/states";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { zodSearchValidator } from "@tanstack/router-zod-adapter";
 import { axiosInstance } from "@/lib/axios";
 
 const routeSearchValidator = z.object({
-  newOrder: z.optional(z.boolean()),
+  returnPage: z.optional(z.enum(['order', 'corporate'])),
 });
 export const Route = createFileRoute("/_authenticated/customers/add")({
-  loader: async ({ context: { queryClient } }) => {
-    queryClient.ensureQueryData(getStatesWithLgas);
-  },
   validateSearch: zodSearchValidator(routeSearchValidator),
   component: () => (
     <main className="grid gap-8">
@@ -59,11 +53,9 @@ export const Route = createFileRoute("/_authenticated/customers/add")({
 });
 const NewCustomerForm = () => {
   const {
-    data: states,
-    isError,
-    isLoading,
-  } = useSuspenseQuery(getStatesWithLgas);
-  const { newOrder } = Route.useSearch();
+   statesLGAs: states
+  } = useLoaderData({from: '/_authenticated'});
+  const { returnPage } = Route.useSearch();
   const form = useForm<z.infer<typeof newCustomerSchema>>({
     resolver: zodResolver(newCustomerSchema),
     defaultValues: {
@@ -101,10 +93,10 @@ const NewCustomerForm = () => {
           description: data.message,
         });
         form.reset();
-        newOrder &&
+        returnPage &&
           navigate({
-            to: "/orders/new",
-            search: { customerId: data.customer.id, page: "detail" },
+            to: returnPage === 'order'?"/orders/new": '/customers/corporate/add',
+            search: { customerId: data.customer.id, page: "detail"},
           });
       },
       onError: (error) => {
@@ -166,7 +158,6 @@ const NewCustomerForm = () => {
                     <FormLabel>State</FormLabel>
                     <FormControl>
                       <Select
-                        disabled={isLoading || isError}
                         onValueChange={field.onChange}
                         // defaultValue={+field.value}
                         value={+field.value as any}
@@ -216,7 +207,7 @@ const NewCustomerForm = () => {
                 type="button"
                 onClick={() => form.handleSubmit(validatePin)()}
               >
-                {newOrder ? "Add Customer & continue" : "Add Customer"}
+                {returnPage ? "Add Customer & continue" : "Add Customer"}
               </Button>
             </div>
           </CardFooter>

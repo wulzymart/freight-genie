@@ -1,52 +1,26 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import {createFileRoute, useLoaderData, useRouter} from "@tanstack/react-router";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {useForm} from "react-hook-form";
 import * as z from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 
-import { Button } from "@/components/ui/button";
+import {Button} from "@/components/ui/button";
 
-import { useState } from "react";
+import {useState} from "react";
 
-import { compare, stationNameCodeGen } from "@/lib/utils";
-import { stationFormSchema } from "@/lib/zodSchemas";
+import {compare, stationNameCodeGen} from "@/lib/utils";
+import {stationFormSchema} from "@/lib/zodSchemas";
 import FormInput from "@/components/form-input";
 import FormTextarea from "@/components/form-textarea";
 import ConfirmPin from "@/components/confirm-pin";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card";
 import TitleCard from "@/components/page-components/title";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { axiosInstance } from "@/lib/axios";
-import { Lga, State, Station, StationType } from "@/lib/custom-types";
-import { useToast } from "@/hooks/use-toast";
-import { getStations } from "@/lib/queries/stations";
-import { getStatesWithLgas } from "@/lib/queries/states";
+import {useMutation} from "@tanstack/react-query";
+import {axiosInstance} from "@/lib/axios";
+import {Lga, State, Station, StationType} from "@/lib/custom-types";
+import {useToast} from "@/hooks/use-toast";
 export const Route = createFileRoute("/_authenticated/stations/add")({
-  loader: async ({ context: { queryClient } }) => {
-    queryClient.ensureQueryData(getStations);
-    queryClient.ensureQueryData(getStatesWithLgas);
-  },
   component: () => (
     <main className="grid gap-8">
       <TitleCard
@@ -58,18 +32,9 @@ export const Route = createFileRoute("/_authenticated/stations/add")({
   ),
 });
 const StationForm = () => {
+  const {stations, statesLGAs} = useLoaderData({from: '/_authenticated'})
   const { toast } = useToast();
-  const {
-    data: statesLGAs,
-    isLoading: statesLGAsLoading,
-    isError: statesLGAsError,
-  } = useSuspenseQuery(getStatesWithLgas);
-  const {
-    data: stations,
-    isLoading: stationsLoading,
-    isError: stationsError,
-    refetch: refetchStation,
-  } = useSuspenseQuery(getStations);
+
   const regionalStations = stations?.filter(
     (station: Station) => station.type === StationType.REGIONAL
   );
@@ -101,8 +66,7 @@ const StationForm = () => {
   );
   const [lgas, setLgas] = useState<Lga[]>([]);
   function getLGAs(stateId: number) {
-    const lga = statesLGAs.find((state: State) => state.id === stateId)?.lgas;
-    return lga;
+    return statesLGAs.find((state: State) => state.id === stateId)?.lgas;
   }
   const { mutate } = useMutation({
     mutationKey: ["stations"],
@@ -128,8 +92,10 @@ const StationForm = () => {
         toast({
           description: data.message,
         });
+        router.invalidate().then(() => {
+          router.load()
+        });
         form.reset();
-        router.invalidate().then(() => refetchStation());
       },
       onError: (error) => {
         toast({
@@ -178,7 +144,6 @@ const StationForm = () => {
             <CardDescription></CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            {statesLGAsLoading || statesLGAsError ? null : (
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -272,8 +237,6 @@ const StationForm = () => {
                   )}
                 />
               </div>
-            )}
-
             <div className="grid grid-flow-col gap-4">
               <FormField
                 control={form.control}
@@ -326,7 +289,6 @@ const StationForm = () => {
                 <FormField
                   control={form.control}
                   name="regionalStationId"
-                  disabled={stationsLoading || stationsError}
                   render={({ field }) => (
                     <FormItem className="w-full">
                       <FormLabel>Mother Station</FormLabel>

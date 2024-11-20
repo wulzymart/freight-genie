@@ -3,7 +3,7 @@ import {
   DeliveryType,
   InterStationOperation,
   OperationEnum,
-  OrderType,
+  OrderType, PaymentType,
   RouteCoverage,
   RouteType,
   StaffRole,
@@ -367,3 +367,23 @@ export const vendorConfigSchema = z.object({
   dim: z.number().min(0, { message: "Must be greater than 0" }),
   logo: z.optional(z.string()),
 });
+export const corporateCustomerSchema = z.object({
+  user: userFormSchema,
+  corporateInfo: z.object({
+    businessName: z.string().min(3, {message: 'Must be 3 characters or more'}),
+    businessAddress: z.object({
+      stateId:  z
+    .string()
+    .min(1, { message: "Please select a state" })
+    .transform((x) => parseInt(x)),
+      address: addressSchema
+    }),
+    businessPhone: ngPhoneNumberSchema
+  }),
+})
+
+export const paymentReceiptSchema = z.object({
+  paymentType: z.enum([PaymentType.CARD, PaymentType.CASH, PaymentType.WALLET]),
+  receiptInfo: z.string().min(3, { message: "Please input receipt details" }),
+  amount: z.number().min(1, { message: "Please enter a valid amount" }),
+})

@@ -12,9 +12,6 @@ import {validatePinElementGen} from "@/lib/utils.ts";
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
 import WaybillInvoice from "@/components/order/order-summary.tsx";

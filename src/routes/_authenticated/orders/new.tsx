@@ -8,12 +8,12 @@ import {getStatesWithLgas} from "@/lib/queries/states";
 import {getStations} from "@/lib/queries/stations";
 import {getItemTypes} from "@/lib/queries/item-types";
 import {getItemCategories} from "@/lib/queries/item-categories";
-import {Prompt} from "@/forms/new-order-prompt..tsx";
-import {OrderDetailForm} from "@/forms/order-detail.tsx";
-import {ReceiverForm} from "@/forms/receiver-info.tsx";
-import {ItemForm} from "@/forms/item-info.tsx";
-import {InsuranceForm} from "@/forms/insurance-form.tsx";
-import {AdditionalServicesForm} from "@/forms/additional-services-form.tsx";
+import {Prompt} from "@/forms/customer/new-customer-prompt..tsx";
+import {OrderDetailForm} from "@/forms/order/order-detail.tsx";
+import {ReceiverForm} from "@/forms/order/receiver-info.tsx";
+import {ItemForm} from "@/forms/order/item-info.tsx";
+import {InsuranceForm} from "@/forms/order/insurance-form.tsx";
+import {AdditionalServicesForm} from "@/forms/order/additional-services-form.tsx";
 import {Pricing} from "@/components/order/pricing.tsx";
 import {getCustomerById} from "@/lib/queries/customer.ts";
 
@@ -79,7 +79,7 @@ function Page() {
     charges,
     page,
   } = Route.useSearch();
-  if (!page) return <Prompt />;
+  if (!page) return <Prompt returnPage='order' />;
   if (!customerId) throw notFound();
   if (page === "detail")
     return <OrderDetailForm {...{ customerId, deliveryDetails }} />;
@@ -128,4 +128,3 @@ function Page() {
   if (page === "payment") return <>payment</>;
   return <>in progress</>;
 }
-

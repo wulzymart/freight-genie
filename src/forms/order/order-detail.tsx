@@ -3,11 +3,8 @@ import {orderSchema} from "@/lib/zodSchemas.ts";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {DeliveryType, InterStationOperation, OrderType, State, Station, StationOperation} from "@/lib/custom-types.ts";
-import {useSuspenseQuery} from "@tanstack/react-query";
-import {getStatesWithLgas} from "@/lib/queries/states.ts";
-import {getStations} from "@/lib/queries/stations.ts";
 import {useState} from "react";
-import {useNavigate} from "@tanstack/react-router";
+import {useLoaderData, useNavigate} from "@tanstack/react-router";
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form.tsx";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
@@ -36,16 +33,8 @@ export function OrderDetailForm({
     const deliveryType = form.watch("deliveryType");
 
     const {
-        data: statesLGAs,
-        isLoading: statesLGAsLoading,
-        isError: statesLGAsError,
-    } = useSuspenseQuery(getStatesWithLgas);
-
-    const {
-        data: stations,
-        isLoading: stationsLoading,
-        isError: stationsError,
-    } = useSuspenseQuery(getStations);
+        stations, statesLGAs,
+    } = useLoaderData({from: '/_authenticated'});
 
     const [state, setState] = useState<State | null>(null);
     const navigate = useNavigate();
@@ -250,7 +239,6 @@ export function OrderDetailForm({
                                         setState(state);
                                         form.resetField("originStationId");
                                     }}
-                                    disabled={statesLGAsError || statesLGAsLoading}
                                     // defaultValue={+field.value}
                                     value={state?.id as unknown as string}
                                 >
@@ -284,7 +272,6 @@ export function OrderDetailForm({
                                         <FormLabel>Origin Station</FormLabel>
                                         <FormControl>
                                             <Select
-                                                disabled={!state || stationsLoading || stationsError}
                                                 onValueChange={field.onChange}
                                                 defaultValue={field.value}
                                                 value={field.value}

@@ -26,21 +26,18 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { axiosInstance } from "@/lib/axios";
 import { ApiResponseType, Station, StationType } from "@/lib/custom-types";
-import { getStations } from "@/lib/queries/stations";
 import { getVendorConfig } from "@/lib/queries/vendor-config";
 import { vendorConfigSchema } from "@/lib/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
+import {useLoaderData, useRouter} from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import useVendor from "@/hooks/vendor.ts";
 
 export const Route = createFileRoute("/_authenticated/setup/config")({
-  loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData(getVendorConfig);
-  },
   component: () => (
     <main className="grid gap-8">
       <TitleCard
@@ -53,6 +50,8 @@ export const Route = createFileRoute("/_authenticated/setup/config")({
 });
 
 const ConfigForm = () => {
+  const vendor = useLoaderData({from: '__root__'})
+  const {reloadVendor} = useVendor()
   const { data: config, refetch: refetchConfig } =
     useSuspenseQuery(getVendorConfig);
   const { mutate: createConfig } = useMutation({
@@ -82,23 +81,21 @@ const ConfigForm = () => {
     (document.getElementById("config-submit") as HTMLDialogElement)?.click();
   };
   const {
-    data: stations,
-    isLoading: stationsLoading,
-    isError: stationsError,
-  } = useSuspenseQuery(getStations);
+    stations
+  } = useLoaderData({from: '/_authenticated'});
   const [isEditing, setIsEditing] = useState(!config);
   const form = useForm<z.infer<typeof vendorConfigSchema>>({
     resolver: zodResolver(vendorConfigSchema),
-    defaultValues: config || {
-      expressFactor: 0,
-      hqId: "",
-      customerCareLine: "",
-      vat: 0,
-      insuranceFactor: 0,
-      ecommerceFactor: 0,
-      dim: 5000,
-      localFactor: 0.8,
-      logo: undefined,
+    defaultValues: {
+      expressFactor: config?.expressFactor||0,
+      hqId: config?.hqId || "",
+      customerCareLine: config?.customerCareLine|| "",
+      vat: config.vat || 0,
+      insuranceFactor: config.insuranceFactor|| 0,
+      ecommerceFactor: config.ecommerceFactor||0,
+      dim: config.dim|| 5000,
+      localFactor: config.localFactor|| 0.8,
+      logo: vendor.logo || undefined,
     },
   });
   const { toast } = useToast();
@@ -111,7 +108,11 @@ const ConfigForm = () => {
         onSuccess: (data) => {
           form.reset();
           toast({description: data?.message});
-          router.invalidate().then(() => refetchConfig());
+          router.invalidate().then(async () => {
+            await reloadVendor()
+            await refetchConfig()
+            setIsEditing(false);
+          });
           setIsEditing(false);
         },
         onError: (data) => {
@@ -123,8 +124,11 @@ const ConfigForm = () => {
         onSuccess: (data) => {
           form.reset();
           toast({description: data?.message});
-          router.invalidate().then(() => refetchConfig());
-          setIsEditing(false);
+          router.invalidate().then(async () => {
+            await reloadVendor()
+            await refetchConfig()
+            setIsEditing(false);
+          });
         },
         onError: (data) => {
           toast({description: data.message, variant: "destructive"});
@@ -147,9 +151,6 @@ const ConfigForm = () => {
                     <FormLabel>HQ Station</FormLabel>
                     <FormControl>
                       <Select
-                        disabled={
-                          stationsLoading || stationsError || !isEditing
-                        }
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                         value={field.value}

@@ -2,10 +2,7 @@ import * as z from "zod";
 import {orderSchema} from "@/lib/zodSchemas.ts";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {useSuspenseQuery} from "@tanstack/react-query";
-import {getStatesWithLgas} from "@/lib/queries/states.ts";
-import {getStations} from "@/lib/queries/stations.ts";
-import {useNavigate} from "@tanstack/react-router";
+import {useLoaderData, useNavigate} from "@tanstack/react-router";
 import {State, Station, StationOperation, StationType} from "@/lib/custom-types.ts";
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form.tsx";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card.tsx";
@@ -41,17 +38,9 @@ export function ReceiverForm({
     const destinationRegionStationId = form.watch("destinationRegionStationId");
 
     const {
-        data: statesLGAs,
-        isLoading: statesLGAsLoading,
-        isError: statesLGAsError,
-    } = useSuspenseQuery(getStatesWithLgas);
+        stations, statesLGAs,
 
-    const {
-        data: stations,
-        isLoading: stationsLoading,
-        isError: stationsError,
-    } = useSuspenseQuery(getStations);
-
+    } = useLoaderData({from: '/_authenticated'})
     const stateId = form.watch("address.stateId");
     const navigate = useNavigate();
 
@@ -133,7 +122,6 @@ export function ReceiverForm({
                                                 value={+field.value as any}
                                             >
                                                 <SelectTrigger
-                                                    disabled={statesLGAsError || statesLGAsLoading}
                                                     className="w-full"
                                                 >
                                                     {field.value ? (
@@ -184,7 +172,6 @@ export function ReceiverForm({
                                                     value={field.value}
                                                 >
                                                     <SelectTrigger
-                                                        disabled={stationsLoading || stationsError}
                                                         className="w-full"
                                                     >
                                                         <SelectValue placeholder="Select station"/>
@@ -220,7 +207,6 @@ export function ReceiverForm({
                                                     value={field.value}
                                                 >
                                                     <SelectTrigger
-                                                        disabled={stationsError || stationsLoading}
                                                         className="w-full"
                                                     >
                                                         <SelectValue placeholder="Select station"/>

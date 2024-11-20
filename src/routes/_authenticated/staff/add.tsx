@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {createFileRoute, Link, useLoaderData, useNavigate} from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -58,14 +58,12 @@ const StaffAddSearchSchema = z.object({
   office: z.optional(officeStaffSchema),
   field: z.optional(tripStaffSchema),
 });
-const officeRoles = [StaffRole.MANAGER, StaffRole.STATION_OFFICER];
+export const officeRoles = [StaffRole.MANAGER, StaffRole.STATION_OFFICER];
 const validatePin = () => {
   (document.getElementById("staff-reg") as HTMLDialogElement)?.click();
 };
 export const Route = createFileRoute("/_authenticated/staff/add")({
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData(getStations);
-   await  queryClient.ensureQueryData(getStatesWithLgas);
     await queryClient.ensureQueryData(getRoutes);
   },
   validateSearch: zodSearchValidator(StaffAddSearchSchema),
@@ -418,16 +416,7 @@ const FieldPersonelForm = ({
   user: z.infer<typeof userFormSchema>;
   staff: z.infer<typeof staffFormSchema>;
 }) => {
-  const {
-    data: statesLGAs,
-    isLoading: statesLGAsLoading,
-    isError: statesLGAsError,
-  } = useSuspenseQuery(getStatesWithLgas);
-  const {
-    data: stations,
-    isLoading: stationsLoading,
-    isError: stationsError,
-  } = useSuspenseQuery(getStations);
+  const {stations, statesLGAs} = useLoaderData({from: '/_authenticated'})
   const [state, setState] = useState<State | null>(null);
   const stateStations = stations.filter(
     (station) => station.stateId === state?.id
@@ -557,7 +546,6 @@ const FieldPersonelForm = ({
                     <Select
                       onValueChange={(value) => {
                         setCoverage(value as RouteCoverage);
-                        form.resetField();
                       }}
                       // defaultValue={+field.value}
                       value={coverage}
@@ -588,7 +576,7 @@ const FieldPersonelForm = ({
                     <Select
                       onValueChange={(value) => {
                         setRouteType(value as RouteType);
-                        form.resetField();
+                        form.resetField('registeredRouteId');
                       }}
                       // defaultValue={+field.value}
                       value={routeType}
@@ -662,7 +650,7 @@ const FieldPersonelForm = ({
                       setState(state);
                       form.resetField("currentStationId");
                     }}
-                    disabled={statesLGAsError || statesLGAsLoading}
+                    disabled={!statesLGAs}
                     // defaultValue={+field.value}
                     value={state?.id as unknown as string}
                   >
@@ -699,7 +687,7 @@ const FieldPersonelForm = ({
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                           value={field.value}
-                          disabled={stationsError || stationsLoading}
+                          disabled={!stations}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select Station" />

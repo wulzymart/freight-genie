@@ -15,9 +15,8 @@ type RouterContext = {
   queryClient: QueryClient;
 };
 export const Route = createRootRouteWithContext<RouterContext>()({
-  beforeLoad: ({ context }) => {
-    const { vendor } = context;
-    vendor.loadVendor();
+  loader: async ({ context: {vendor: vendorHooks} }) => {
+    return await vendorHooks.loadVendor();
   },
   component: () => (
     <React.Fragment>

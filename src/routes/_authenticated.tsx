@@ -23,6 +23,8 @@ import MobileMenu from "@/components/layout-components/menu/mobile-menu";
 import AppBreadCrumb from "@/components/layout-components/bread-crumb";
 import { getStoredUser, useAuth } from "@/hooks/auth-context";
 import { useCallback } from "react";
+import {getStatesWithLgas} from "@/lib/queries/states.ts";
+import {getStations} from "@/lib/queries/stations.ts";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: ({ context }) => {
@@ -32,6 +34,14 @@ export const Route = createFileRoute("/_authenticated")({
       setUser(user);
     } else {
       throw redirect({ to: "/login" });
+    }
+  },
+  loader: async ({context: {queryClient}}) => {
+    const statesLGAs = await  queryClient.ensureQueryData(getStatesWithLgas)
+        const stations = await queryClient.ensureQueryData(getStations)
+    return {
+      statesLGAs,
+      stations
     }
   },
   component: PanelLayout,
@@ -69,7 +79,7 @@ export function PanelLayout() {
                 className="overflow-hidden rounded-full"
               >
                 <img
-                  src="/placeholder-user.jpg"
+                  src="/avatar.svg"
                   width={36}
                   height={36}
                   alt="Avatar"

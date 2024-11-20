@@ -9,6 +9,12 @@ export enum UserRole {
   STAFF = "Staff",
   CUSTOMER = "Customer",
 }
+export enum PaymentType {
+  CARD = 'CARD',
+  CASH = 'CASH',
+  TRANSFER = 'TRANSFER',
+  WALLET = 'WALLET',
+}
 export type NewCustomerType = "Yes" | "No";
 export type UserType = {
   id: string;

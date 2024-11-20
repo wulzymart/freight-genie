@@ -1,6 +1,5 @@
 import * as React from "react";
 import { jwtDecode } from "jwt-decode";
-import axios from "axios";
 import { axiosInstance } from "@/lib/axios";
 
 export interface AuthContext {

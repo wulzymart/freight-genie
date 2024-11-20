@@ -14,3 +14,15 @@ export function getCustomerById(customerId: string) {
         }
     })
 }
+export function getCorporateCustomer(idOrPhone: string) {
+    return queryOptions({
+        queryKey:[`corporateCustomer-${idOrPhone}`],
+        queryFn: async () => {
+            const {data}: {data: ApiResponseType} = await axiosInstance.get(
+                "/vendor/customers/corporate/" + idOrPhone
+            );
+            if (!data?.success) throw new Error(data.message)
+            return data.corporateCustomer;
+        }
+    })
+}

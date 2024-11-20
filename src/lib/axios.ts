@@ -15,7 +15,7 @@ axiosInstance.interceptors.request.use((config): any => {
       ...config.headers,
       Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`,
       "x-vendor-id": localStorage.getItem("vendor")
-        ? JSON.parse(localStorage.getItem("vendor")!).id
+        ? JSON.parse(localStorage.getItem("vendor")!).vendor.id
         : "",
     },
   };
