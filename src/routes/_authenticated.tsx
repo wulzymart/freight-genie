@@ -8,7 +8,7 @@ import { getStoredUser} from "@/hooks/auth-context";
 import {getStatesWithLgas} from "@/lib/queries/states.ts";
 import {getStations} from "@/lib/queries/stations.ts";
 import {SidebarInset, SidebarProvider, SidebarTrigger} from "@/components/ui/sidebar.tsx";
-import {AppSidebar} from "@/components/app-sidebar.tsx";
+import {AppSidebar} from "@/components/layout-components/menu/app-sidebar.tsx";
 import {Separator} from "@/components/ui/separator.tsx";
 import {User} from "@/lib/custom-types.ts";
 
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/_authenticated")({
   loader: async ({context: {queryClient, auth: {user: {staff}}}}) => {
     const statesLGAs = await  queryClient.ensureQueryData(getStatesWithLgas)
         const stations = await queryClient.ensureQueryData(getStations)
-    const staffStationId = staff.officePersonnelInfo?.stationId
+    const staffStationId = staff?.officePersonnelInfo?.stationId
     const staffState =  statesLGAs.find(state => state.id === stations.find(station => station.id === staffStationId)?.stateId);
     return {
       statesLGAs,

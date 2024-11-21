@@ -236,8 +236,9 @@ export interface Customer {
   email: string;
   address: { stateId: number; address: string };
   customerType: CustomerType;
+  corporateCustomer?: CorporateCustomer;
   histories: History[];
-  // orders: Relation<Order[]>;
+  orders: Order[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -407,6 +408,7 @@ export type WalletPayment = {
   id: string;
   corporateCustomerId: string;
   orderId: string;
+  amount: number;
   processedBy: OfficePersonnel;
 }
 

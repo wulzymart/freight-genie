@@ -1,5 +1,5 @@
 import {queryOptions} from "@tanstack/react-query";
-import {ApiResponseType} from "@/lib/custom-types.ts";
+import {ApiResponseType, CorporateCustomer, Customer} from "@/lib/custom-types.ts";
 import {axiosInstance} from "@/lib/axios.ts";
 
 export function getCustomerById(customerId: string) {
@@ -10,7 +10,7 @@ export function getCustomerById(customerId: string) {
                 "/vendor/customers/" + customerId
             );
             if (!data?.success) throw new Error(data.message)
-            return data.customer;
+            return data.customer as Customer;
         }
     })
 }
@@ -22,7 +22,7 @@ export function getCorporateCustomer(idOrPhone: string) {
                 "/vendor/customers/corporate/" + idOrPhone
             );
             if (!data?.success) throw new Error(data.message)
-            return data.corporateCustomer;
+            return data.corporateCustomer as CorporateCustomer;
         }
     })
 }

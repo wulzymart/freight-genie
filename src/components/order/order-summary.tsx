@@ -6,55 +6,15 @@ import {getItemTypes} from "@/lib/queries/item-types.ts";
 import {useLoaderData} from "@tanstack/react-router";
 
 
-const WaybillInvoice = ({order}: {order: Partial<Order>}) => {
+const WaybillInvoice = ({order}: {order?: Partial<Order>}) => {
   const {stations, statesLGAs} = useLoaderData({from: '/_authenticated'})
   const vendor = useLoaderData({from: '__root__'})
-  // Sample data with new fields
-  const data = {
-    companyInfo: {
-      name: "FastExpress Logistics",
-      address: "123 Logistics Way, Business District",
-      customerCare: ["0800-123-4567", "0800-987-6543"],
-      logo: "/api/placeholder/100/50"
-    },
-    trackingNumber: "FEL-2024-11190045",
-    orderCategory: "Express Delivery",
-    stationCoverage: "National",
-    orderType: "Standard Delivery",
-    originStationId: "STN-001",
-    stationOperation: "Direct",
-    destinationStationId: "STN-002",
-    destinationRegionStationId: "REG-001",
-    deliveryType: "Door to Door",
-    interStationOperation: "Regular",
-    customer: {
-      name: "John Doe",
-      phoneNumber: "080-1234-5678",
-      address: {
-        state: "Lagos",
-        streetAddress: "45 Customer Street"
-      }
-    },
-    receiver: {
-      name: "Jane Smith",
-      phoneNumber: "080-8765-4321",
-      address: {
-        state: "Abuja",
-        streetAddress: "78 Receiver Avenue"
-      }
-    },
-    item: {
-      itemType: "document",
-      weight: "2.5kg",
-      dimensions: "30x20x15cm",
-      description: "Contract Papers",
-      category: "Legal Documents"
-    },
-    paymentStatus: "Paid",
-    payOnDelivery: false,
-    processedBy: "Alex Johnson",
-    processedDate: "2024-11-19 14:30"
-  };
+  const loadedData = order? undefined: useLoaderData({from: '/_authenticated/orders/$id'})
+
+  const customerData: {data: Customer} | undefined = order ? useSuspenseQuery(getCustomerById(order.customerId!)): undefined
+  let customer =(loadedData?.customer || customerData?.data) as Customer
+  order = (order || loadedData?.order) as Order
+
 
   const {
     data: itemTypes,
@@ -63,16 +23,17 @@ const WaybillInvoice = ({order}: {order: Partial<Order>}) => {
   } = useSuspenseQuery(getItemTypes)
   const vendorHq= stations.find((s) => s.id === vendor.config?.hqId)
   const vendorHqState = statesLGAs.find((s) => s.id === vendorHq?.stateId)
-  const {data:customer}: {data: Customer} = useSuspenseQuery(getCustomerById(order.customerId!));
-  const originStation = stations.find((station: Station) => station.id === order.originStationId!);
-  const destinationStation = stations.find((station: Station) => station.id === order.destinationStationId || order.destinationRegionStationId );
-  const customerState = statesLGAs.find((state: State) => state.id === customer.address.stateId);
-  const receiverState = statesLGAs.find((state: State) => state.id === order.receiver?.address.stateId);
+
+
+  const originStation = stations.find((station: Station) => station.id === order!.originStationId!);
+  const destinationStation = stations.find((station: Station) => station.id === order!.destinationStationId || order!.destinationRegionStationId );
+  const customerState = statesLGAs.find((state: State) => state.id === customer!.address.stateId);
+  const receiverState = statesLGAs.find((state: State) => state.id === order!.receiver?.address.stateId);
   if (typesLoading)  return <p>Gathering data...</p>
   if (typesError)  return <p>Error Gathering data...</p>
   const  type: ItemType = itemTypes.find((type: ItemType) => type.name === order.item?.type);
   return (
-      <div className="w-[210mm] h-[148mm] bg-white p-6 font-sans text-sm">
+      <div className="w-[210mm] h-[148mm] bg-white p-2 m-0 font-sans text-sm">
         {/* Header Section */}
         <div className="border-b-2 border-gray-200 pb-4">
           <div className="flex justify-between items-center">
@@ -200,9 +161,9 @@ const WaybillInvoice = ({order}: {order: Partial<Order>}) => {
                 <p className="text-gray-600 text-xs">Category</p>
                 <p className="font-semibold">{order.item?.category}</p>
               </div>
-              <div className={data.item.itemType === 'document' ? "col-span-2" : ""}>
+              <div className={order.item!.type === 'document' ? "col-span-2" : ""}>
                 <p className="text-gray-600 text-xs">Description</p>
-                <p className="font-semibold">{order.item?.description}</p>
+                <p className="font-semibold">{order.item?.description.slice(0, 50)}</p>
               </div>
               <div>
 

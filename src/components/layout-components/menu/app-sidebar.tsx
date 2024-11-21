@@ -1,9 +1,9 @@
 import * as React from "react"
 
-import { NavMain } from "@/components/nav-main"
+import { NavMain } from "@/components/nav-main.tsx"
 import { NavTools } from "@/components/nav-tools.tsx"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+import { NavSecondary } from "@/components/nav-secondary.tsx"
+import { NavUser } from "@/components/nav-user.tsx"
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar.tsx"
 import {Link} from "@tanstack/react-router";
 import {useAuth} from "@/hooks/auth-context.tsx";
 import {menuData} from "@/components/layout-components/menu/menu-data.ts";

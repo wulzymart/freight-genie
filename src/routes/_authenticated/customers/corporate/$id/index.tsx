@@ -8,7 +8,7 @@ const CorporateCustomerOverview = () => {
   const corporateCustomer = useLoaderData({from: '/_authenticated/customers/corporate/$id'})
   console.log(corporateCustomer)
   // Helper function to format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',

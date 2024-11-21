@@ -6,6 +6,7 @@ import {paymentReceiptSchema} from "@/lib/zodSchemas.ts";
 import {ApiResponseType} from "@/lib/custom-types.ts";
 import {axiosInstance} from "@/lib/axios.ts";
 import {useToast} from "@/hooks/use-toast.ts";
+import TitleCard from "@/components/page-components/title.tsx";
 
 function WalletRefillPage(){
   const {id} = Route.useParams()
@@ -31,7 +32,7 @@ function WalletRefillPage(){
       } })
 
   }
-  return <PaymentForm modalId='wallet-refill' title='Wallet Refill' walletTopUp onSubmit={onSubmit } />
+  return <div><TitleCard title='Wallet Refill'/><PaymentForm modalId='wallet-refill'  walletTopUp onSubmit={onSubmit } /></div>
 }
 export const Route = createFileRoute(
     '/_authenticated/customers/corporate/$id/refill',

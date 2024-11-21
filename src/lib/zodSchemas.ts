@@ -385,7 +385,7 @@ export const corporateCustomerSchema = z.object({
 })
 
 export const paymentReceiptSchema = z.object({
-  paymentType: z.enum([PaymentType.CARD, PaymentType.CASH, PaymentType.WALLET]),
+  paymentType: z.enum([PaymentType.CARD, PaymentType.CASH, PaymentType.WALLET, PaymentType.TRANSFER]),
   receiptInfo: z.string().min(3, { message: "Please input receipt details" }),
   amount: z.number().min(1, { message: "Please enter a valid amount" }),
 })

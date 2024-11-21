@@ -57,7 +57,7 @@ export function Pricing({
     };
 
 
-    const {data, isLoading, isError} = useSuspenseQuery({
+    const {data: price, isLoading, isError} = useSuspenseQuery({
         queryKey: ["price"],
         staleTime: 1,
         queryFn: async () => {
@@ -84,7 +84,7 @@ export function Pricing({
     const onSubmit = () => {
         mutate(order, {onSuccess: async (data: ApiResponseType) => {
             toast({description: data.message})
-                await  navigate({to: `/orders/${data.order.id}/payment`})
+                await  navigate({to: `/orders/${data.order.id}/payment?amount=${price.total}` })
             }, onError: (error) => {
             toast({description: error.message, variant: 'destructive'})
             }})
@@ -107,13 +107,13 @@ export function Pricing({
                     <TableBody>
                         <TableRow>
                             <TableCell>Freight Price</TableCell>
-                            <TableCell className="text-right">N{data.freightPrice}</TableCell>
+                            <TableCell className="text-right">N{price.freightPrice}</TableCell>
                         </TableRow>
-                        {data.totalAdditionalCharges ? (
+                        {price.totalAdditionalCharges ? (
                             <TableRow>
                                 <TableCell>Additional Charges</TableCell>
                                 <TableCell className="text-right">
-                                    N{data.totalAdditionalCharges}
+                                    N{price.totalAdditionalCharges}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -121,12 +121,12 @@ export function Pricing({
                         )}
                         <TableRow>
                             <TableCell>Sub Total</TableCell>
-                            <TableCell className="text-right">N{data.subtotal}</TableCell>
+                            <TableCell className="text-right">N{price.subtotal}</TableCell>
                         </TableRow>
-                        {data.insurance ? (
+                        {price.insurance ? (
                             <TableRow>
                                 <TableCell>Insurance</TableCell>
-                                <TableCell className="text-right">N{data.insurance}</TableCell>
+                                <TableCell className="text-right">N{price.insurance}</TableCell>
                             </TableRow>
                         ) : (
                             ""
@@ -134,12 +134,12 @@ export function Pricing({
 
                         <TableRow>
                             <TableCell>VAT</TableCell>
-                            <TableCell className="text-right">N{data.vat}</TableCell>
+                            <TableCell className="text-right">N{price.vat}</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell className="font-medium text-lg">Total</TableCell>
                             <TableCell className="text-right font-medium text-lg">
-                                N{data.total}
+                                N{price.total}
                             </TableCell>
                         </TableRow>
                     </TableBody>

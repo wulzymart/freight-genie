@@ -69,7 +69,7 @@ export const Route = createFileRoute("/_authenticated/orders/new")({
   ),
   beforeLoad: ({context}) => {
     const {user} = context.auth
-    if (user.staff.role !== StaffRole.STATION_OFFICER && user.staff.role !== StaffRole.MANAGER)  throw new Error("You are not able to view this page, because, you are required to be a front line station staff to add new waybill")
+    if (![StaffRole.DIRECTOR, StaffRole.MANAGER, StaffRole.STATION_OFFICER].includes(user.staff.role))  throw new Error("You are not able to view this page, because, you are required to be a front line station staff to add new waybill")
   },
   errorComponent: ({error}) => {
     return <CustomErrorComponent errorMessage={error.message} />;

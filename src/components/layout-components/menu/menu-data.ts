@@ -1,8 +1,9 @@
-import { Building2Icon, Frame, LifeBuoy, LucideIcon, Map, PieChart, Send} from "lucide-react";
-import { IconType } from "react-icons/lib";
+import {Building2Icon, Frame, LifeBuoy, LucideIcon, Map, PieChart, Send} from "lucide-react";
+import {IconType} from "react-icons/lib";
 
-import {FaRoute, FaShippingFast, FaTripadvisor, FaChargingStation} from "react-icons/fa";
+import {FaChargingStation, FaRoute, FaShippingFast, FaTripadvisor} from "react-icons/fa";
 import {StaffRole} from "@/lib/custom-types.ts";
+
 export type SubMenuItem = {
   title: string
   url: string
@@ -41,7 +42,7 @@ export const menuData: {
         {
           title: "New Waybill",
           url: "/orders/new",
-          permitted: [StaffRole.MANAGER, StaffRole.STATION_OFFICER]
+          permitted: [StaffRole.MANAGER, StaffRole.STATION_OFFICER, StaffRole.DIRECTOR]
         },
         {
           title: "Outbound",

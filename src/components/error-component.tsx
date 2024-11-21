@@ -16,7 +16,7 @@ export const CustomErrorComponent = ({ errorMessage = 'An unexpected error occur
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+        <div className="flex items-center justify-center h-full bg-gray-100 p-4">
             <Card className="w-full max-w-md shadow-lg">
                 <CardHeader className="text-center bg-gray-200 py-6">
                     <div className="flex justify-center mb-4">

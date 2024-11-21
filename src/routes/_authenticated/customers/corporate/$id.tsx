@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_authenticated/customers/corporate/$id')(
       const corporateCustomer = await queryClient.ensureQueryData(
         getCorporateCustomer(id),
       )
-      if (!corporateCustomer) return notFound()
+      if (!corporateCustomer) throw notFound()
       return corporateCustomer
     },
     component: () => (

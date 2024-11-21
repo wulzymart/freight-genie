@@ -2,7 +2,6 @@ import * as z from "zod";
 import {paymentReceiptSchema} from "@/lib/zodSchemas.ts";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import TitleCard from "@/components/page-components/title.tsx";
 import {Form, FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form.tsx";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import FormInput from "@/components/form-input.tsx";
@@ -13,17 +12,17 @@ import {Button} from "@/components/ui/button.tsx";
 import ConfirmPin from "@/components/confirm-pin.tsx";
 import {validatePinElementGen} from "@/lib/utils.ts";
 
-export const PaymentForm = ({title, modalId, onSubmit, walletTopUp}: {
+export const PaymentForm = ({ modalId, onSubmit, walletTopUp, amount: sentAmount}: {
     modalId: string,
     onSubmit: (data: z.infer<typeof paymentReceiptSchema>) => any,
-    title: string
+    amount?: number,
     walletTopUp?: boolean
 }) => {
 
     const form = useForm<z.infer<typeof paymentReceiptSchema>>({
         resolver: zodResolver(paymentReceiptSchema),
         defaultValues: {
-            amount: 0,
+            amount: sentAmount || 0,
             receiptInfo: '',
             paymentType: undefined,
         }
@@ -35,7 +34,6 @@ export const PaymentForm = ({title, modalId, onSubmit, walletTopUp}: {
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
             <div className="mx-auto space-y-8">
-                <TitleCard title={title}/>
                 <Form {...form}>
                     <form>
                         <div className="grid gap-6 md:grid-cols-2">
@@ -53,6 +51,7 @@ export const PaymentForm = ({title, modalId, onSubmit, walletTopUp}: {
                                         type="number"
                                         placeholder="Enter amount"
                                         inputClass="w-full"
+                                        disabled={!!sentAmount}
                                         description="Please enter the payment amount"
                                     />
                                 </CardContent>
