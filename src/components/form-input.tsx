@@ -8,7 +8,7 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { Control } from "react-hook-form";
-import {capitalizeFirstLetter} from "@/lib/utils.ts";
+import { capitalizeFirstLetter } from "@/lib/utils.ts";
 
 const FormInput = ({
   control,
@@ -20,10 +20,11 @@ const FormInput = ({
   inputClass,
   caseTransform,
   disabled,
-    capitalize,
+  capitalize,
   description,
-    min, max,
-    ...others
+  min,
+  max,
+  ...others
 }: {
   control?: Control<any>;
   name: string;
@@ -33,12 +34,12 @@ const FormInput = ({
   message?: string;
   inputClass?: string;
   caseTransform?: "upper" | "lower";
-  capitalize?: boolean
+  capitalize?: boolean;
   disabled?: boolean;
   description?: string;
   min?: number;
   max?: number;
-  others?: any
+  others?: any;
 }) => {
   return (
     <FormField
@@ -55,19 +56,22 @@ const FormInput = ({
                 type={type}
                 {...field}
                 onChange={(e) => {
-                  let value: string | number = e.currentTarget.value
-                  if (type === 'number') value = +value
-                  else if (caseTransform) {
-                    if (caseTransform === 'upper') value = value.toUpperCase()
-                    else value = value.toLowerCase()
-                  } else if (capitalize) value = capitalizeFirstLetter(value)
-                  field.onChange(value)
-                }
-                }
+                  let value: string | number = e.currentTarget.value;
+                  if (type === "number") value = +value;
+                  else {
+                    value = value.trim();
+                    if (caseTransform) {
+                      if (caseTransform === "upper")
+                        value = value.toUpperCase();
+                      else value = value.toLowerCase();
+                    } else if (capitalize) value = capitalizeFirstLetter(value);
+                  }
+                  field.onChange(value);
+                }}
                 placeholder={placeholder}
                 className={inputClass}
-                min ={min}
-                max = {max}
+                min={min}
+                max={max}
                 {...others}
               />
               <span className="text-sm font-light text-gray-700">

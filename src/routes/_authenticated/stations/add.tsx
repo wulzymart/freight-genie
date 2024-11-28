@@ -16,7 +16,7 @@ import FormTextarea from "@/components/form-textarea";
 import ConfirmPin from "@/components/confirm-pin";
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card";
 import TitleCard from "@/components/page-components/title";
-import {useMutation} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {axiosInstance} from "@/lib/axios";
 import {Lga, StaffRole, State, Station, StationType} from "@/lib/custom-types";
 import {useToast} from "@/hooks/use-toast";
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/stations/add")({
 const StationForm = () => {
   const {stations, statesLGAs} = useLoaderData({from: '/_authenticated'})
   const { toast } = useToast();
-
+  const queryClient = useQueryClient()
   const regionalStations = stations?.filter(
     (station: Station) => station.type === StationType.REGIONAL
   );
@@ -96,16 +96,20 @@ const StationForm = () => {
     values.phoneNumbers = values.phoneNumbers.split(" ") as any;
 
     mutate(values, {
-      onSuccess: (data) => {
+      onSuccess:  (data) => {
         toast({
           description: data.message,
         });
-        router.invalidate().then(() => {
-          router.load()
-        });
-        form.reset();
+
+        queryClient.refetchQueries({queryKey: ['stations']}).then(() =>
+        router.invalidate().then(async () => {
+          await router.load()
+          form.reset()
+        }))
+
       },
       onError: (error) => {
+        console.log(error)
         toast({
           description: error.message,
           variant: "destructive",
@@ -175,9 +179,7 @@ const StationForm = () => {
                           }}
                           // defaultValue={+field.value}
                           value={
-                            ''+statesLGAs.find(
-                              (state: State) => state.id === +field.value
-                            )?.id
+                            +field.value as any
                           }
                         >
                           <SelectTrigger className="w-full">
@@ -194,7 +196,7 @@ const StationForm = () => {
                             {statesLGAs.map((state: State) => (
                               <SelectItem
                                 key={state.id}
-                                value={state.id as any}
+                                value={+state.id as any}
                               >
                                 {state.name}
                               </SelectItem>
@@ -217,8 +219,7 @@ const StationForm = () => {
                           onValueChange={field.onChange}
                           // defaultValue={field.value}
                           value={
-                            lgas.find((lga: Lga) => lga.id === +field.value)
-                              ?.id as any
+                            +field.value as any
                           }
                         >
                           <SelectTrigger disabled={!stateId} className="w-full">
@@ -232,7 +233,7 @@ const StationForm = () => {
                             )}
                           </SelectTrigger>
                           <SelectContent>
-                            {lgas.sort(compare).map((lga: Lga) => (
+                            {lgas?.sort(compare).map((lga: Lga) => (
                               <SelectItem key={lga.id} value={lga.id as any}>
                                 {lga.name}
                               </SelectItem>

@@ -80,3 +80,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}

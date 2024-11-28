@@ -5,7 +5,6 @@ const useVendor = () => {
   const host = window.location.host;
   const loadVendor = async () => {
     const storedVendor = localStorage.getItem("vendor");
-      console.log(storedVendor);
     if (storedVendor) {
         const data = JSON.parse(storedVendor);
         if (new  Date().getTime() - new Date(data.timestamp).getTime() > 24 * 60 * 60 * 1000 ) return reloadVendor()
@@ -19,13 +18,20 @@ const useVendor = () => {
       });
   };
   const reloadVendor = async () => {
-    const {data: {vendor}} = await axios
-        .get(`${import.meta.env.VITE_API}/admin/vendors?url=${host}`)
-        .then((response) => {
-          return response.data.vendor;
-        });
-    localStorage.setItem("vendor", JSON.stringify({vendor, timestamp: new Date()}),);
-    return vendor as Vendor;
+      try {
+
+          const res = await axios
+              .get(`${import.meta.env.VITE_API}/admin/vendors?url=${host}`)
+
+              if (res.status > 300) {
+                  console.log('not found')}
+              const vendor = res.data.vendor as Vendor;
+          localStorage.setItem("vendor", JSON.stringify({vendor, timestamp: new Date()}),);
+          return vendor as Vendor;
+      }
+      catch (error) {
+          console.log(error);
+      }
   }
   return {
     loadVendor,

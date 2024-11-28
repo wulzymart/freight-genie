@@ -1,22 +1,25 @@
 export enum StaffRole {
-  DIRECTOR = 'Director',
-  HR = 'Hr',
-  MANAGER = 'Manager',
-  STATION_OFFICER = 'Station officer',
-  VEHICLE_ASSISTANT = 'Vehicle assistant',
-  DRIVER = 'Driver',
+  DIRECTOR = "Director",
+  HR = "Hr",
+  MANAGER = "Manager",
+  STATION_OFFICER = "Station officer",
+  VEHICLE_ASSISTANT = "Vehicle assistant",
+  DRIVER = "Driver",
 }
+
 export enum UserRole {
   DEVELOPER = "Developer",
   STAFF = "Staff",
   CUSTOMER = "Customer",
 }
+
 export enum PaymentType {
-  CARD = 'CARD',
-  CASH = 'CASH',
-  TRANSFER = 'TRANSFER',
-  WALLET = 'WALLET',
+  CARD = "CARD",
+  CASH = "CASH",
+  TRANSFER = "TRANSFER",
+  WALLET = "WALLET",
 }
+
 export type NewCustomerType = "Yes" | "No";
 export type UserType = {
   id: string;
@@ -45,7 +48,7 @@ export type VendorConfig = {
   dim: number;
   vendor: Vendor;
   vendorId: string;
-}
+};
 
 export type Vendor = {
   id: string;
@@ -70,11 +73,13 @@ export type ApiResponseType = {
   success: boolean;
   [key: string]: any;
 };
+
 export enum RouteCoverage {
   LOCAL = "Regional",
   INTRASTATE = "Intrastate-regions",
   INTERSTATE = "Interstate-regions",
 }
+
 export enum RouteType {
   REGULAR = "Regular",
   EXPRESS = "Express",
@@ -87,17 +92,18 @@ export interface RouteInterface {
   code: string;
   stationIds: string[];
 }
-export type AdditionalCharge ={
+
+export type AdditionalCharge = {
   id: number;
   charge: string;
-}
-
+};
 
 export interface Lga {
   id: number;
   name: string;
   stateId: number;
 }
+
 export interface State {
   id: number;
   name: string;
@@ -107,14 +113,17 @@ export interface State {
   longitude: number;
   lgas: Lga[];
 }
+
 export enum OperationEnum {
   INTERSTATION = "Interstation",
   LASTMAN = "Last-man",
 }
+
 export enum CustomerType {
   INDIVIDUAL = "individual",
   CORPORATE = "corporate",
 }
+
 export interface History {
   id: string;
   info: string;
@@ -122,6 +131,7 @@ export interface History {
   performedById: string;
   createdAt: Date;
 }
+
 export type User = {
   id: string;
   email: string;
@@ -133,7 +143,7 @@ export type User = {
   customer: CorporateCustomer;
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
 export type Staff = {
   id: string;
@@ -144,27 +154,31 @@ export type Staff = {
   role: StaffRole;
   officePersonnelInfo?: OfficePersonnel;
   vehicleAssistantInfo?: TripPersonnel;
-  driverInfo?: TripPersonnel
+  driverInfo?: TripPersonnel;
   createdAt: Date;
   updatedAt: Date;
-}
-export type OfficePersonnel ={
+};
+export type OfficePersonnel = {
   id: string;
   staffInfo: Staff;
   station: Station;
   stationId: string;
   orders: Order[];
-}
+};
 export type TripPersonnel = {
   id: string;
   staffInfo: Staff;
   currentStation: Station;
   currentStationId: string;
+  registeredIn: Station;
+  registeredInId: string;
   operation: OperationEnum;
   routeCoverage?: RouteCoverage;
   registeredRoute: Route;
   registeredRouteId: string;
-}
+  currentVehicle: Vehicle;
+  currentVehicleId: string;
+};
 
 export type Route = {
   id: number;
@@ -172,15 +186,19 @@ export type Route = {
   type: RouteType;
   code: string;
   stationIds: string[];
-  vehicles: Vehicle
+  routingInfo: any;
+  vehicles: Vehicle[];
   drivers: TripPersonnel[];
   vehicleAssistants: TripPersonnel[];
-}
+};
+
 export enum VehicleCoverage {
   LOCAL = "local",
+  REGIONAL = "regional",
   INTRASTATE = "intrastate",
   INTERSTATE = "interstate",
 }
+
 export enum VehicleType {
   BICYCLE = "bicycle",
   SCOOTER = "scooter",
@@ -192,42 +210,103 @@ export enum VehicleType {
   TRUCK = "truck",
 }
 
+export enum VehicleStatus {
+  AVAILABLE = "Available",
+  DAMAGED = "Damaged",
+  TRANSIT = "In-transit",
+}
+
 export type Vehicle = {
   id: string;
   registrationNumber: string;
   type: VehicleType;
   model: string;
+  status: VehicleStatus;
   coverage: VehicleCoverage;
   registeredTo: Station;
   currentStation: Station;
+  registeredToId: string;
+  currentStationId: string;
   currentRoute?: Route; //update with route
   currentTrip?: Trip; // update with trips
-}
+  currentTripId?: string;
+};
+
 export enum TripCoverage {
-  LASTMAN = "last-man",
-  INTRASTATE = "intrastate",
-  INTERSTATE = "interstate",
+  LOCAL = "Local",
+  REGIONAL = "Regional",
+  INTRASTATE = "Intrastate",
+  INTERSTATE = "Interstate",
+}
+
+export enum TripStatus {
+  PLANNED = "Planned",
+  ONGOING = "Ongoing",
+  DELAYED = "Delayed",
+  COMPLETED = "Completed",
+}
+
+export enum TripType {
+  EXPRESS = "Express",
+  REGULAR = "Regular",
 }
 
 export type Trip = {
   id: string;
+  code: string;
   coverage: TripCoverage;
+  type: TripType;
+  status: TripStatus;
   vehicle: Vehicle;
   driver: TripPersonnel;
   vehicleAssistant?: TripPersonnel;
   shipments: Shipment[];
+  origin: Station;
+  originId: string;
+  destination: Station;
+  destinationId: string;
   createdAt: Date;
   updatedAt: Date;
   route: Route;
+};
+
+export enum ShipmentStatus {
+  CREATED = "Created",
+  LOADED = "Loaded",
+  TRANSIT = "In-transit",
+  DELAYED = "Delayed",
+  INTERMEDIATE = "At Intermediate Station",
+  DELIVERED = "Delivered",
 }
+
+export enum ShipmentType {
+  DIRECT = "Direct",
+  TRANSHIPMENT = "Transhipment",
+}
+
+export enum ShipmentCoverage {
+  LOCAL = "Local",
+  REGIONAL = "Regional",
+  INTRASTATE = "Intrastate",
+  INTERSTATE = "Interstate",
+}
+
 export type Shipment = {
   id: string;
-  name: string;
+  code: string;
+  status: ShipmentStatus;
+  coverage: ShipmentCoverage;
+  type: ShipmentType;
   orders: Order[];
   trip: Trip;
+  origin: Station;
+  originId: string;
+  destination: Station;
+  destinationId: string;
   createdAt: Date;
   updatedAt: Date;
-}
+};
+
 export interface Customer {
   id: string;
   firstname: string;
@@ -242,6 +321,7 @@ export interface Customer {
   createdAt: Date;
   updatedAt: Date;
 }
+
 export type CorporateCustomer = {
   id: string;
   userInfo: User;
@@ -253,7 +333,8 @@ export type CorporateCustomer = {
   histories: History[];
   createdAt: Date;
   updatedAt: Date;
-}
+};
+
 export enum StationOperation {
   LOCAL = "Local",
   INTERSTATION = "Interstation",
@@ -264,6 +345,7 @@ export enum InterStationOperation {
   INTRASTATE = "Intrastate Regions",
   INTERSTATE = "Interstate Regions",
 }
+
 export enum OrderType {
   REGULAR = "Regular",
   EXPRESS = "Express",
@@ -275,12 +357,11 @@ export enum DeliveryType {
   STATION_TO_STATION = "Station to station",
   STATION_TO_DOOR = "Station to door",
 }
+
 export enum TypePricing {
   FIXED = "fixed",
   PER_KG = "per kg",
 }
-
-
 
 export type Order = {
   id: string;
@@ -333,28 +414,26 @@ export type Order = {
   createdAt: Date;
 
   updatedAt: Date;
-}
-
+};
 
 export type ItemType = {
-  name: string
-  pricing: TypePricing
-  limit?: number
-  min?: number
-  price:number
-}
+  name: string;
+  pricing: TypePricing;
+  limit?: number;
+  min?: number;
+  price: number;
+};
 export type ItemCategory = {
   id: number;
   name: string;
   priceFactor: number;
-}
-
+};
 
 export type ExpensePurpose = {
   id: number;
   name: string;
   maxValue: number;
-}
+};
 
 export enum ExpenseStatus {
   PENDING = "pending",
@@ -372,9 +451,7 @@ export type Expense = {
   respondedToBy: Staff;
   createdAt: Date;
   updatedAt: Date;
-}
-
-
+};
 
 export enum ReceiptType {
   ORDER_PAYMENT = "order payment",
@@ -385,13 +462,13 @@ export type Receipt = {
   id: string;
   receiptType: ReceiptType;
   amount: number;
-  receiptInfo: string
+  receiptInfo: string;
   customerId: string;
   corporateCustomerId: string;
   orderId: string;
   processedBy: OfficePersonnel;
   createdAt: Date;
-}
+};
 
 export type OrderPayment = {
   id: string;
@@ -401,8 +478,7 @@ export type OrderPayment = {
   receiptId: string;
   createdAt: Date;
   updatedAt: Date;
-}
-
+};
 
 export type WalletPayment = {
   id: string;
@@ -410,9 +486,9 @@ export type WalletPayment = {
   orderId: string;
   amount: number;
   processedBy: OfficePersonnel;
-}
+};
 
-export type Station ={
+export type Station = {
   id: string;
   name: string;
   nickName: string;
@@ -429,8 +505,10 @@ export type Station ={
   regionalStation?: Station;
   regionalStationId: string;
   officePersonnel: OfficePersonnel[];
-  drivers: TripPersonnel[];
-  vehicleAssistants: TripPersonnel;
+  currentDrivers: TripPersonnel[];
+  registeredDrivers: TripPersonnel[];
+  currentVehicleAssistants: TripPersonnel[];
+  registeredVehicleAssistants: TripPersonnel[];
   availableVehicles: Vehicle[];
   registeredVehicles: Vehicle[];
   generatedOrders: Order[];
@@ -438,11 +516,19 @@ export type Station ={
   phoneNumbers: string[];
   createdAt: Date;
   updatedAt: Date;
-}
+};
+
 export enum OrderStatus {
   PENDING = "pending",
-  ACCEPTED= "Accepted",
+  ACCEPTED = "Accepted",
   SHIPPED = "Shipped",
   TRANSIT = "In Transit",
   DELAYED = "Delayed",
+}
+
+export type Coordinate = [long: number, lat: number];
+
+export enum RoutingProfileType {
+  OSRM = "osrm",
+  ORS = "ors",
 }

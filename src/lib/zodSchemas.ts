@@ -3,7 +3,8 @@ import {
   DeliveryType,
   InterStationOperation,
   OperationEnum,
-  OrderType, PaymentType,
+  OrderType,
+  PaymentType,
   RouteCoverage,
   RouteType,
   StaffRole,
@@ -11,8 +12,10 @@ import {
   StationType,
   TypePricing,
   UserRole,
+  VehicleCoverage,
+  VehicleType,
 } from "./custom-types";
-
+import { sortOrder } from "@/lib/query-params.tsx";
 
 export const ngPhoneNumbersSchema = z
   .string()
@@ -38,7 +41,6 @@ export const addressSchema = z
 export const stationSchema = z
   .string()
   .min(2, { message: "Please select a station" });
-
 
 // export const fullNameSchema = z
 //   .string()
@@ -113,38 +115,28 @@ export const stationFormSchema = z.object({
   stateId: z
     .string()
     .min(1, { message: "Please select a state" })
-    .refine(
-      (data) => !!data,
-      { message: "Please select a state" }
-    ),
+    .refine((data) => !!data, { message: "Please select a state" }),
   lgaId: z
     .string()
     .min(1, { message: "Please select a lga" })
-    .refine(
-      (data) => data,
-      { message: "Please select a lga" }
-    ),
+    .refine((data) => data, { message: "Please select a lga" }),
   address: addressSchema,
   phoneNumbers: ngPhoneNumbersSchema,
   longitude: z
     .string()
-    .refine(
-      (data) => floatRegex.test(data),
-      {
-        message: "Longitude must be a number eg 0.00",
-      }
-    )
+    .refine((data) => floatRegex.test(data), {
+      message: "Longitude must be a number eg 0.00",
+    })
     .transform((arg) => parseFloat(arg)),
   latitude: z
     .string()
-    .refine(
-      (data) => floatRegex.test(data),
-      { message: "Latitude must be a number eg 0.00" }
-    )
+    .refine((data) => floatRegex.test(data), {
+      message: "Latitude must be a number eg 0.00",
+    })
     .transform((arg) => parseFloat(arg)),
   type: z.enum([StationType.LOCAL, StationType.REGIONAL]),
   regionalStationId: z.optional(
-    z.string().min(1, { message: "Please select a regional station" })
+    z.string().min(1, { message: "Please select a regional station" }),
   ),
 });
 
@@ -165,11 +157,12 @@ export const officeStaffSchema = z.object({
 
 export const tripStaffSchema = z
   .object({
-    currentStationId: z.string(),
+    currentStationId: z.string().uuid(),
+    registeredInId: z.string().uuid(),
     registeredRouteId: z.string().transform((x) => parseInt(x)),
     operation: z.enum(Object.values(OperationEnum) as any),
     routeCoverage: z.optional(z.enum(Object.values(RouteCoverage) as any)),
-    routeType: z.optional(z.enum(Object.values(RouteType) as any))
+    routeType: z.optional(z.enum(Object.values(RouteType) as any)),
   })
   .superRefine(({ operation, registeredRouteId }, ctx) => {
     if (operation === OperationEnum.INTERSTATION && !registeredRouteId)
@@ -205,7 +198,7 @@ export const orderSchema = {
     .object({
       stationOperation: z.enum(Object.values(StationOperation) as any),
       interStationOperation: z.optional(
-        z.enum(Object.values(InterStationOperation) as any)
+        z.enum(Object.values(InterStationOperation) as any),
       ),
       orderType: z.enum(Object.values(OrderType) as any),
       deliveryType: z.enum(Object.values(DeliveryType) as any),
@@ -250,42 +243,63 @@ export const orderSchema = {
       .optional(stationSchema)
       .transform((s) => (s ? s : undefined)),
   }),
-  item: z.object({
-    category: z.string().min(2, { message: "Select a category" }),
-    type: z.string(),
-    condition: z.string().min(2, { message: "Select appropriate condition" }),
-    description: z
-      .string()
-      .min(10, { message: "Provide a detailed descriptions" }),
-    quantity: z.number(),
-    weight: z.optional(
-      z.number().min(1, { message: "Weight must be 1kg or more" })
-    ),
-    length: z.optional(
-        z.number().min(1, { message: "Please Provide length or leave blank" }).transform(x => x ? x : undefined)
-    ),
-    height: z.optional(
-        z.number().min(1, { message: "Please provide height or leave blank" }).transform(x => x ? x : undefined)
-    ),
-    width: z.optional(
-        z.number().min(1, { message: "Please provide width or leave blank" }).transform(x => x ? x : undefined)
-    ),
-  }).superRefine((data, ctx) => {
-    if (!((!data.height && !data.length && !data.width) || (data.height && data.length && data.width))) return ctx.addIssue({path: [!data.length ? 'length': !data.width? 'width': 'height'], message: "Please provide valid dimensions", code: "custom"});
-  }),
+  item: z
+    .object({
+      category: z.string().min(2, { message: "Select a category" }),
+      type: z.string(),
+      condition: z.string().min(2, { message: "Select appropriate condition" }),
+      description: z
+        .string()
+        .min(10, { message: "Provide a detailed descriptions" }),
+      quantity: z.number(),
+      weight: z.optional(
+        z.number().min(1, { message: "Weight must be 1kg or more" }),
+      ),
+      length: z.optional(
+        z
+          .number()
+          .min(1, { message: "Please Provide length or leave blank" })
+          .transform((x) => (x ? x : undefined)),
+      ),
+      height: z.optional(
+        z
+          .number()
+          .min(1, { message: "Please provide height or leave blank" })
+          .transform((x) => (x ? x : undefined)),
+      ),
+      width: z.optional(
+        z
+          .number()
+          .min(1, { message: "Please provide width or leave blank" })
+          .transform((x) => (x ? x : undefined)),
+      ),
+    })
+    .superRefine((data, ctx) => {
+      if (
+        !(
+          (!data.height && !data.length && !data.width) ||
+          (data.height && data.length && data.width)
+        )
+      )
+        return ctx.addIssue({
+          path: [!data.length ? "length" : !data.width ? "width" : "height"],
+          message: "Please provide valid dimensions",
+          code: "custom",
+        });
+    }),
   additionalServices: z
     .array(
       z.object({
         charge: z.string().min(1, { message: "Please select a service" }),
         price: z.number().min(1, { message: "Value cannot be 0 or negative" }),
-      })
+      }),
     )
     .min(0),
   insurance: z
     .object({
       insured: z.boolean(),
       itemValue: z.optional(
-        z.number().min(1, { message: "Value must be greater than 0" })
+        z.number().min(1, { message: "Value must be greater than 0" }),
       ),
     })
     .superRefine((data, ctx) => {
@@ -353,7 +367,7 @@ export const routeFormSchema = z.object({
   }),
   stationIds: z
     .array(
-      z.string().uuid({ message: "Please select a station or remove entry" })
+      z.string().uuid({ message: "Please select a station or remove entry" }),
     )
     .min(2, { message: "Please provide 2 or more stations" }),
 });
@@ -372,20 +386,69 @@ export const vendorConfigSchema = z.object({
 export const corporateCustomerSchema = z.object({
   user: userFormSchema,
   corporateInfo: z.object({
-    businessName: z.string().min(3, {message: 'Must be 3 characters or more'}),
+    businessName: z
+      .string()
+      .min(3, { message: "Must be 3 characters or more" }),
     businessAddress: z.object({
-      stateId:  z
-    .string()
-    .min(1, { message: "Please select a state" })
-    .transform((x) => parseInt(x)),
-      address: addressSchema
+      stateId: z
+        .string()
+        .min(1, { message: "Please select a state" })
+        .transform((x) => parseInt(x)),
+      address: addressSchema,
     }),
-    businessPhone: ngPhoneNumberSchema
+    businessPhone: ngPhoneNumberSchema,
   }),
-})
+});
 
 export const paymentReceiptSchema = z.object({
-  paymentType: z.enum([PaymentType.CARD, PaymentType.CASH, PaymentType.WALLET, PaymentType.TRANSFER]),
+  paymentType: z.enum([
+    PaymentType.CARD,
+    PaymentType.CASH,
+    PaymentType.WALLET,
+    PaymentType.TRANSFER,
+  ]),
   receiptInfo: z.string().min(3, { message: "Please input receipt details" }),
   amount: z.number().min(1, { message: "Please enter a valid amount" }),
-})
+});
+
+export const RoutesQuerySchema = z.optional(
+  z.object({
+    coverage: z.optional(z.enum(Object.values(RouteCoverage) as any)),
+    type: z.optional(z.enum(Object.values(RouteType) as any)),
+    order: z.optional(
+      z.object({
+        type: z.optional(z.enum(Object.values(sortOrder) as any)),
+        coverage: z.optional(z.enum(Object.values(sortOrder) as any)),
+        code: z.optional(z.enum(Object.values(sortOrder) as any)),
+      }),
+    ),
+    take: z.optional(z.number()),
+    skip: z.optional(z.number()),
+  }),
+);
+
+export const addVehicleSchema = z.object({
+  registrationNumber: z
+    .string()
+    .min(4, { message: "Please enter a valid vehicle registration number" }),
+  type: z.enum(Object.values(VehicleType) as any),
+  model: z.string().min(3, { message: "Please enter a vehicle model" }),
+  coverage: z.enum(Object.values(VehicleCoverage) as any),
+  registeredToId: stationSchema,
+  currentStationId: stationSchema,
+});
+
+export const VehiclesQueryStringsSchema = z.object({
+  type: z.nativeEnum(VehicleType).optional(),
+  coverage: z.nativeEnum(VehicleCoverage).optional(),
+  currentStationId: z.string().optional(),
+  registeredToId: z.string().optional(),
+  order: z
+    .object({
+      type: z.nativeEnum(sortOrder).optional(),
+      coverage: z.nativeEnum(sortOrder).optional(),
+    })
+    .optional(),
+  take: z.number().int().positive().optional(),
+  skip: z.number().int().min(0).optional(),
+});
