@@ -11,15 +11,17 @@ import { axiosInstance } from "@/lib/axios.ts";
 import qs from "qs";
 import { RouteTable } from "@/tables/routes/route-table.tsx";
 
+const allowed = [
+  StaffRole.DIRECTOR,
+  StaffRole.MANAGER,
+  StaffRole.REGION_MANAGER,
+];
 export const Route = createFileRoute("/_authenticated/routes/")({
   component: RouteTable,
   beforeLoad: async ({ context }) => {
     // await axiosInstance.get('/vendor/routes/update')
     const { user } = context.auth;
-    if (
-      user.staff.role !== StaffRole.DIRECTOR &&
-      user.staff.role !== StaffRole.MANAGER
-    )
+    if (!allowed.includes(user.staff.role))
       throw new Error("You are not authorized to access this page");
   },
   loaderDeps: ({ search }) => ({ search }),

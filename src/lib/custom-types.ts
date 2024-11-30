@@ -1,6 +1,7 @@
 export enum StaffRole {
   DIRECTOR = "Director",
   HR = "Hr",
+  REGION_MANAGER = "Region manager",
   MANAGER = "Manager",
   STATION_OFFICER = "Station officer",
   VEHICLE_ASSISTANT = "Vehicle assistant",
@@ -165,6 +166,12 @@ export type OfficePersonnel = {
   stationId: string;
   orders: Order[];
 };
+
+export enum TripPersonnelStatus {
+  AVAILABLE = "Available",
+  ASSIGNED = "Assigned",
+}
+
 export type TripPersonnel = {
   id: string;
   staffInfo: Staff;
@@ -172,12 +179,16 @@ export type TripPersonnel = {
   currentStationId: string;
   registeredIn: Station;
   registeredInId: string;
+  status: TripPersonnelStatus;
   operation: OperationEnum;
   routeCoverage?: RouteCoverage;
-  registeredRoute: Route;
-  registeredRouteId: string;
-  currentVehicle: Vehicle;
-  currentVehicleId: string;
+  registeredRoute?: Route;
+  routeType?: RouteType;
+  registeredRouteId?: string;
+  currentTrip?: Trip;
+  currentTripId?: string;
+  currentVehicle?: Vehicle;
+  currentVehicleId?: string;
 };
 
 export type Route = {
@@ -233,7 +244,7 @@ export type Vehicle = {
 };
 
 export enum TripCoverage {
-  LOCAL = "Local",
+  LASTMAN = "Last-man",
   REGIONAL = "Regional",
   INTRASTATE = "Intrastate",
   INTERSTATE = "Interstate",
@@ -260,6 +271,9 @@ export type Trip = {
   vehicle: Vehicle;
   driver: TripPersonnel;
   vehicleAssistant?: TripPersonnel;
+  vehicleId: string;
+  driverId: string;
+  vehicleAssistantId?: string;
   shipments: Shipment[];
   origin: Station;
   originId: string;
@@ -268,6 +282,7 @@ export type Trip = {
   createdAt: Date;
   updatedAt: Date;
   route: Route;
+  routeId: number;
 };
 
 export enum ShipmentStatus {

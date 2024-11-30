@@ -1,7 +1,10 @@
 import {
+  OperationEnum,
   RouteCoverage,
   RouteType,
+  TripPersonnelStatus,
   VehicleCoverage,
+  VehicleStatus,
   VehicleType,
 } from "@/lib/custom-types.ts";
 
@@ -24,7 +27,28 @@ export type VehiclesQueryStrings = {
   coverage?: VehicleCoverage;
   currentStationId?: string;
   registeredToId?: string;
+  currentRouteId?: number;
+  status?: VehicleStatus;
   order?: { type?: sortOrder; coverage?: sortOrder };
+  take?: number;
+  skip?: number;
+};
+export type TripPersonnelQueryStrings = {
+  type: "driver" | "assistant";
+  operation?: OperationEnum;
+  routeCoverage?: RouteCoverage;
+  currentStationId?: string;
+  registeredInId?: string;
+  registeredRouteId?: number;
+  routeType?: RouteType;
+  status?: TripPersonnelStatus;
+  order?: {
+    type?: sortOrder;
+    routeCoverage?: sortOrder;
+    routeType?: sortOrder;
+    operation?: sortOrder;
+    status?: sortOrder;
+  };
   take?: number;
   skip?: number;
 };

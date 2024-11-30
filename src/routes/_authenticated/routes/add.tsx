@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
-import { compare, routeCodeGen } from "@/lib/utils";
+import { compare, routeTripCodeGen } from "@/lib/utils";
 import { routeFormSchema } from "@/lib/zodSchemas";
 import FormInput from "@/components/form-input";
 import ConfirmPin from "@/components/confirm-pin";
@@ -39,9 +39,10 @@ import { axiosInstance } from "@/lib/axios";
 import {
   RouteCoverage,
   RouteType,
+  StaffRole,
+  State,
   Station,
   StationType,
-  State, StaffRole,
 } from "@/lib/custom-types";
 import { useToast } from "@/hooks/use-toast";
 import { getStations } from "@/lib/queries/stations";
@@ -54,8 +55,13 @@ import {
 import { MdAdd, MdDragHandle } from "react-icons/md";
 import { TrashIcon } from "lucide-react";
 import { getRoutes } from "@/lib/queries/routes";
-import {CustomErrorComponent} from "@/components/error-component.tsx";
+import { CustomErrorComponent } from "@/components/error-component.tsx";
 
+const allowed = [
+  StaffRole.MANAGER,
+  StaffRole.REGION_MANAGER,
+  StaffRole.DIRECTOR,
+];
 export const Route = createFileRoute("/_authenticated/routes/add")({
   loader: async ({ context: { queryClient } }) => {
     queryClient.ensureQueryData(getStations);
@@ -71,13 +77,14 @@ export const Route = createFileRoute("/_authenticated/routes/add")({
       <RouteForm />
     </main>
   ),
-  beforeLoad: ({context}) => {
-    const {user} = context.auth
-    if (user.staff.role !== StaffRole.DIRECTOR && user.staff.role !== StaffRole.MANAGER)  throw new Error("You are not authorized to access this page")
+  beforeLoad: ({ context }) => {
+    const { user } = context.auth;
+    if (!allowed.includes(user.staff.role))
+      throw new Error("You are not authorized to access this page");
   },
-  errorComponent: ({error}) => {
+  errorComponent: ({ error }) => {
     return <CustomErrorComponent errorMessage={error.message} />;
-  }
+  },
 });
 
 function RouteForm() {
@@ -94,18 +101,18 @@ function RouteForm() {
   } = useSuspenseQuery(getStations);
   const { data: routes } = useSuspenseQuery(getRoutes);
   const regionalStations = stations?.filter(
-    (station: Station) => station.type === StationType.REGIONAL
+    (station: Station) => station.type === StationType.REGIONAL,
   );
   const [stateId, setStateId] = useState<number | null>(null);
   const [regionStationId, setRegionStationId] = useState<string | null>(null);
 
   const stateRegionalStations = regionalStations?.filter(
-    (station: Station) => station.stateId === stateId
+    (station: Station) => station.stateId === stateId,
   );
   const [originState, setOriginState] = useState<State | null>(null);
   const [destinationState, setDestinationState] = useState<State | null>(null);
   const region = stations.find(
-    (station: Station) => station.id === regionStationId
+    (station: Station) => station.id === regionStationId,
   );
   const regionStations = region ? [region, ...region.localStations] : [];
 
@@ -177,13 +184,13 @@ function RouteForm() {
     )
       form.setValue(
         "code",
-        routeCodeGen(
+        routeTripCodeGen(
           routes,
           coverage,
           type,
           originState.code,
-          coverage === RouteCoverage.INTERSTATE ? destinationState?.code : null
-        )
+          coverage === RouteCoverage.INTERSTATE ? destinationState?.code : null,
+        ),
       );
   }, [originState, destinationState]);
   return (
@@ -235,7 +242,7 @@ function RouteForm() {
                               <SelectItem key={coverage} value={coverage}>
                                 {coverage}
                               </SelectItem>
-                            )
+                            ),
                           )}
                         </SelectContent>
                       </Select>
@@ -289,7 +296,7 @@ function RouteForm() {
                 <Select
                   onValueChange={(value) => {
                     const state = statesLGAs.find(
-                      (state: State) => state.id === +value
+                      (state: State) => state.id === +value,
                     );
                     setOriginState(state || null);
                     setStateId(+value);
@@ -326,7 +333,7 @@ function RouteForm() {
                   <Select
                     onValueChange={(value) => {
                       const state = statesLGAs.find(
-                        (state: State) => state.id === +value
+                        (state: State) => state.id === +value,
                       );
                       setDestinationState(state || null);
                     }}
@@ -385,7 +392,7 @@ function RouteForm() {
                           value={
                             regionStations.find(
                               (station: Station) =>
-                                station.id === regionStationId
+                                station.id === regionStationId,
                             )?.id
                           }
                         >
@@ -418,7 +425,7 @@ function RouteForm() {
                             selectedStationIds.length < 2)
                             ? append("")
                             : alert(
-                                "An express route can only contain 2 stations"
+                                "An express route can only contain 2 stations",
                               )
                         }
                       >
@@ -458,7 +465,7 @@ function RouteForm() {
                                             selectedStationIds.includes(value)
                                           )
                                             return alert(
-                                              "Station has already been selected"
+                                              "Station has already been selected",
                                             );
                                           field.onChange(value);
                                         }}

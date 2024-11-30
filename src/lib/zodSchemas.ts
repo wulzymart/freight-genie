@@ -10,6 +10,8 @@ import {
   StaffRole,
   StationOperation,
   StationType,
+  TripCoverage,
+  TripType,
   TypePricing,
   UserRole,
   VehicleCoverage,
@@ -451,4 +453,20 @@ export const VehiclesQueryStringsSchema = z.object({
     .optional(),
   take: z.number().int().positive().optional(),
   skip: z.number().int().min(0).optional(),
+});
+
+export const tripFormSchema = z.object({
+  code: z.string().min(1, "Trip code is required"),
+  coverage: z.nativeEnum(TripCoverage),
+  type: z.nativeEnum(TripType),
+  vehicleId: z.string().min(1, "Vehicle ID is required"),
+  driverId: z.string().min(1, "Driver ID is required"),
+  vehicleAssistantId: z.string().optional(),
+  originId: z.string().min(1, "Origin ID is required"),
+  destinationId: z.string().min(1, "Destination ID is required").optional(),
+  routeId: z
+    .number()
+    .int()
+    .positive("Route ID must be a positive integer")
+    .optional(),
 });

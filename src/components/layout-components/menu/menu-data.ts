@@ -1,36 +1,51 @@
-import {Building2Icon, Frame, LifeBuoy, LucideIcon, Map, PieChart, Send} from "lucide-react";
-import {IconType} from "react-icons/lib";
+import {
+  Building2Icon,
+  Frame,
+  LifeBuoy,
+  LucideIcon,
+  Map,
+  PieChart,
+  Send,
+} from "lucide-react";
+import { IconType } from "react-icons/lib";
 
-import {FaChargingStation, FaRoute, FaShippingFast, FaTripadvisor} from "react-icons/fa";
-import {StaffRole} from "@/lib/custom-types.ts";
+import {
+  FaChargingStation,
+  FaRoute,
+  FaShippingFast,
+  FaTripadvisor,
+} from "react-icons/fa";
+import { StaffRole } from "@/lib/custom-types.ts";
 
 export type SubMenuItem = {
-  title: string
-  url: string
-  permitted?: StaffRole[]
-} 
+  title: string;
+  url: string;
+  permitted?: StaffRole[];
+};
 
-export type MenuItem= {
-  title: string
-  url: string
-  icon: LucideIcon | IconType
-  isActive?: boolean
-  permitted?: StaffRole[]
-  items?: SubMenuItem[]
-}
+export type MenuItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon | IconType;
+  isActive?: boolean;
+  permitted?: StaffRole[];
+  items?: SubMenuItem[];
+};
 export type SecondaryMenuItem = {
-  title: string,
-  url:  string,
-  icon: LucideIcon | IconType,
-}
+  title: string;
+  url: string;
+  icon: LucideIcon | IconType;
+};
 export type ToolMenuItem = {
-  name: string ,
-  url:  string,
-  icon: LucideIcon | IconType,
-}
+  name: string;
+  url: string;
+  icon: LucideIcon | IconType;
+};
 
 export const menuData: {
-  navMain: MenuItem[], navSecondary: SecondaryMenuItem[], projects: ToolMenuItem[]
+  navMain: MenuItem[];
+  navSecondary: SecondaryMenuItem[];
+  projects: ToolMenuItem[];
 } = {
   navMain: [
     {
@@ -42,7 +57,12 @@ export const menuData: {
         {
           title: "New Waybill",
           url: "/orders/new",
-          permitted: [StaffRole.MANAGER, StaffRole.STATION_OFFICER, StaffRole.DIRECTOR]
+          permitted: [
+            StaffRole.MANAGER,
+            StaffRole.REGION_MANAGER,
+            StaffRole.STATION_OFFICER,
+            StaffRole.DIRECTOR,
+          ],
         },
         {
           title: "Outbound",
@@ -61,8 +81,12 @@ export const menuData: {
       items: [
         {
           title: "New Trip",
-          url: "#",
-          permitted: [StaffRole.MANAGER, StaffRole.DIRECTOR]
+          url: "/trips/new",
+          permitted: [
+            StaffRole.MANAGER,
+            StaffRole.REGION_MANAGER,
+            StaffRole.DIRECTOR,
+          ],
         },
         {
           title: "View Trips",
@@ -75,14 +99,18 @@ export const menuData: {
         {
           title: "View Shipments",
           url: "#",
-        }
+        },
       ],
     },
     {
       title: "Station Operations",
       url: "#",
       icon: FaChargingStation,
-      permitted: [StaffRole.MANAGER, StaffRole.DIRECTOR],
+      permitted: [
+        StaffRole.MANAGER,
+        StaffRole.REGION_MANAGER,
+        StaffRole.DIRECTOR,
+      ],
       items: [
         {
           title: "Add Expense",
@@ -102,7 +130,11 @@ export const menuData: {
       title: "Route Planning",
       url: "#",
       icon: FaRoute,
-      permitted: [StaffRole.MANAGER, StaffRole.DIRECTOR],
+      permitted: [
+        StaffRole.MANAGER,
+        StaffRole.REGION_MANAGER,
+        StaffRole.DIRECTOR,
+      ],
       items: [
         {
           title: "Add Route",
@@ -144,7 +176,6 @@ export const menuData: {
           title: "Manage Vehicles",
           url: "/vehicles",
         },
-
       ],
     },
   ],
@@ -177,4 +208,4 @@ export const menuData: {
       icon: Map,
     },
   ],
-}
+};
