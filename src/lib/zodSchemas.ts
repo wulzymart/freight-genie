@@ -461,12 +461,19 @@ export const tripFormSchema = z.object({
   type: z.nativeEnum(TripType),
   vehicleId: z.string().min(1, "Vehicle ID is required"),
   driverId: z.string().min(1, "Driver ID is required"),
-  vehicleAssistantId: z.string().optional(),
-  originId: z.string().min(1, "Origin ID is required"),
-  destinationId: z.string().min(1, "Destination ID is required").optional(),
-  routeId: z
-    .number()
-    .int()
-    .positive("Route ID must be a positive integer")
+  vehicleAssistantId: z
+    .string()
+    .transform((x) => (x ? x : undefined))
     .optional(),
+  originId: z.string().min(1, "Origin ID is required"),
+  destinationId: z
+    .string()
+    .min(1, "Destination ID is required")
+    .transform((x) => (x ? x : undefined))
+    .optional(),
+  routeId: z
+    .string()
+    .transform((x) => (x ? parseInt(x) : undefined))
+    .optional(),
+  isReturn: z.boolean().default(false).optional(),
 });

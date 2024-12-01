@@ -57,9 +57,6 @@ import { useToast } from "@/hooks/use-toast.ts";
 import ConfirmPin from "@/components/confirm-pin.tsx";
 import { validatePinElementGen } from "@/lib/utils.ts";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { MapBox } from "@/components/map.tsx";
-import { Marker, Popup } from "react-leaflet";
-import { Hotline } from "react-leaflet-hotline";
 import { useForm } from "react-hook-form";
 import {
   Form,
@@ -79,6 +76,7 @@ import { getRouteById } from "@/lib/queries/routes.ts";
 import { DataTable } from "@/components/ui/data-table.tsx";
 import { columns } from "@/tables/vehicles/columns.tsx";
 import { tripPersonnelColumns } from "@/tables/trip-officers/columns.tsx";
+import { RoutingMap } from "@/components/maps/routing.tsx";
 
 export const Route = createFileRoute("/_authenticated/routes/$id")({
   component: Page,
@@ -376,32 +374,7 @@ function Page() {
               </DndContext>
             </Card>
             <Card className="col-span-2 h-[500px]">
-              <MapBox
-                center={[routeStations[0].latitude, routeStations[0].longitude]}
-                zoom={7}
-              >
-                {routeStations.map((station) => (
-                  <Marker
-                    key={station.id}
-                    position={[station.latitude, station.longitude]}
-                  >
-                    <Popup>
-                      <p>
-                        {station.name} ({station.nickName})
-                      </p>
-                    </Popup>
-                  </Marker>
-                ))}
-
-                {locations && (
-                  <Hotline
-                    data={locations}
-                    getLat={(l: { lat: number; long: number }) => l.lat}
-                    getLng={(l: { lat: number; long: number }) => l.long}
-                    getVal={() => 5}
-                  />
-                )}
-              </MapBox>
+              <RoutingMap routeStations={routeStations} locations={locations} />
             </Card>
           </div>
         </CardContent>

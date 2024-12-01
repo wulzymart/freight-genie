@@ -18,7 +18,7 @@ export function MapBox({
       center={center}
       zoom={zoom}
       scrollWheelZoom={false}
-      className="h-full"
+      className="h-full !relative !z-0"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

@@ -283,6 +283,7 @@ export type Trip = {
   updatedAt: Date;
   route: Route;
   routeId: number;
+  isReturn: boolean;
 };
 
 export enum ShipmentStatus {

@@ -1,4 +1,8 @@
-import { createFileRoute, useLoaderData } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useLoaderData,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { tripFormSchema } from "@/lib/zodSchemas.ts";
@@ -13,6 +17,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select.tsx";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ApiResponseType,
   Route as RouteInterface,
@@ -44,7 +50,7 @@ import {
 } from "@/lib/custom-types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { useAuth } from "@/hooks/auth-context.tsx";
-import { routeTripCodeGen } from "@/lib/utils.ts";
+import { routeTripCodeGen, validatePinElementGen } from "@/lib/utils.ts";
 import {
   TripPersonnelQueryStrings,
   VehiclesQueryStrings,
@@ -53,7 +59,11 @@ import { axiosInstance } from "@/lib/axios.ts";
 import qs from "qs";
 import { CustomErrorComponent } from "@/components/error-component.tsx";
 import { Label } from "@/components/ui/label.tsx";
-
+import { useToast } from "@/hooks/use-toast.ts";
+import { useMutation } from "@tanstack/react-query";
+import * as z from "zod";
+import { RoutingMap } from "@/components/maps/routing.tsx";
+import ConfirmPin from "@/components/confirm-pin.tsx";
 export const Route = createFileRoute("/_authenticated/trips/new")({
   component: TripForm,
   errorComponent: ({ error }) => (
@@ -81,15 +91,31 @@ function TripForm() {
       type: TripType.REGULAR,
       vehicleId: "",
       driverId: "",
-      vehicleAssistantId: "",
+      vehicleAssistantId: undefined,
       originId: staff.officePersonnelInfo?.stationId || "",
       destinationId: "",
       routeId: undefined,
+      isReturn: false,
     },
   });
   const routeId = form.watch("routeId");
   const coverage = form.watch("coverage");
-
+  const isReturn = form.watch("isReturn");
+  const originId = form.watch("originId");
+  const destinationId = form.watch("destinationId");
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { mutate } = useMutation({
+    mutationKey: ["trips"],
+    mutationFn: async (values: z.infer<typeof tripFormSchema>) => {
+      const { data }: { data: ApiResponseType } = await axiosInstance.post(
+        "/vendor/trips",
+        values,
+      );
+      if (!data.success) throw new Error(data.message);
+      return data;
+    },
+  });
   // generate type safe routeCoverage
   let routeCoverage: RouteCoverage | undefined;
 
@@ -162,8 +188,6 @@ function TripForm() {
     );
   }
 
-  const originId = form.watch("originId");
-
   // routes list generation
   const routesList = routes.filter(
     (route) =>
@@ -174,10 +198,36 @@ function TripForm() {
   const [route, setRoute] = useState<RouteInterface>();
 
   // destination stations
-  const destinationStations = route?.stationIds
-    .map((id) => stations.find((station) => station.id === id)!)
-    .filter((station) => station.id !== originId);
+  const [destinationStationsList, setDestinationStationsList] = useState<
+    Station[]
+  >([]);
+  const stationsInOrder = (
+    isReturn: boolean = false,
+    route: RouteInterface,
+  ) => {
+    return isReturn ? route.stationIds.reverse() : route.stationIds;
+  };
+  const setDestinationStations = (
+    isReturn: boolean = false,
+    originId: string,
+    route: RouteInterface,
+  ) => {
+    const stationIds = stationsInOrder(isReturn, route);
 
+    const originIndex = stationIds.findIndex((id) => id === originId);
+    if (originIndex === -1 || originIndex === stationIds.length - 1)
+      return setDestinationStationsList([]);
+    const returnStations = stationIds
+      .slice(originIndex + 1)
+      .map((id) => stations.find((station) => station.id === id));
+
+    console.log(returnStations);
+    setDestinationStationsList(returnStations as Station[]);
+  };
+  useEffect(() => {
+    if (!route || !originId) return;
+    setDestinationStations(isReturn, originId, route);
+  }, [originId, route, isReturn]);
   const [originStateCode, setOriginStateCode] = useState<string | undefined>(
     statesLGAs.find(
       (state: State) =>
@@ -260,22 +310,71 @@ function TripForm() {
     fetchDrivers().then((data) => setDrivers(data));
     fetchAssistants().then((data) => setVehicleAssistants(data));
   }, [routeId, coverage, originId, type]);
-  const onSubmit = (data: any) => {
-    console.log("Form Data:", data);
+
+  const onSubmit = (value: z.infer<typeof tripFormSchema>) => {
+    mutate(value, {
+      onSuccess: async (data) => {
+        toast({ description: data.message });
+        await navigate({ to: `/trips/${data.trip.id}` });
+      },
+      onError: (error) => {
+        toast({ description: error.message, variant: "destructive" });
+      },
+    });
     // Handle form submission
   };
+  const [mapData, setMapData] = useState<any>();
 
+  const getMapDetails = (
+    isReturn: boolean,
+    originId: string,
+    route?: RouteInterface,
+    destinationId?: string,
+  ) => {
+    if (!originId) return;
+    const data: any = {};
+    const origin = stations.find((station) => station.id === originId);
+    if (!destinationId) {
+      data.routeStations = [origin!];
+      return data;
+    }
+    if (!route) return;
+    const stationIds = stationsInOrder(isReturn, route);
+    const originIndex = stationIds.findIndex((id) => id === originId);
+    const destinationIndex = stationIds.findIndex((id) => id === destinationId);
+    const routeStationIds = stationIds.slice(originIndex, destinationIndex + 1);
+    const routeStations = routeStationIds.map(
+      (id) => stations.find((station) => station.id === id)!,
+    )!;
+    data.routeStations = routeStations as Station[];
+    data.locations = routeStations.map((station) => ({
+      lat: station.latitude,
+      long: station.longitude,
+    }));
+    return data;
+  };
+  useEffect(() => {
+    if (!originId) return;
+    if (isReturn && !destinationId) return;
+    const data = getMapDetails(isReturn, originId, route, destinationId);
+    setMapData(data);
+  }, [isReturn, route, originId, destinationId]);
   return (
     <div className=" p-4">
-      <Card>
+      <Card className="relative z-40">
         <CardHeader>
           <CardTitle>Create New Trip</CardTitle>
           <CardDescription>Fill out the trip details carefully</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <form
+              onSubmit={form.handleSubmit(() =>
+                validatePinElementGen("add-trip"),
+              )}
+              className="space-y-6"
+            >
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
                 {/* Coverage Select */}
                 <FormField
                   control={form.control}
@@ -370,60 +469,60 @@ function TripForm() {
                 />
 
                 {/*State select*/}
-                {(coverage === TripCoverage.INTRASTATE || ([TripCoverage.LASTMAN, TripCoverage.REGIONAL].includes(
-                  coverage,
-                ) &&
-                  !staff.officePersonnelInfo?.stationId))
-                   && (
-                    <div className="flex flex-col gap-3">
-                      <FormLabel>State</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          const state = statesLGAs.find(
-                            (state: State) => state.id === +value,
-                          );
-                          setState(state);
-                          form.resetField("code");
-                          form.resetField("originId");
-                          setOriginStateCode(
-                            statesLGAs.find(
-                              (state: State) =>
-                                state.id ===
-                                staff.officePersonnelInfo?.station?.stateId,
-                            )?.code,
-                          );
-                          setDestinationStateCode(undefined);
-                          form.resetField("destinationId");
-                          setRegion(undefined);
-                          setRoute(undefined);
-                        }}
-                        disabled={!statesLGAs}
-                        // defaultValue={+field.value}
-                        value={state?.id as unknown as string}
-                      >
-                        <SelectTrigger className="">
-                          {state ? (
-                            <SelectValue
-                              placeholder="Select State"
-                              className="w-full"
-                            />
-                          ) : (
-                            "Select State"
-                          )}
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statesLGAs.map((state: State) => (
-                            <SelectItem
-                              key={state.id}
-                              value={state.id as unknown as string}
-                            >
-                              {state.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                {(coverage === TripCoverage.INTRASTATE ||
+                  ([TripCoverage.LASTMAN, TripCoverage.REGIONAL].includes(
+                    coverage,
+                  ) &&
+                    !staff.officePersonnelInfo?.stationId)) && (
+                  <div className="flex flex-col gap-3">
+                    <FormLabel>State</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        const state = statesLGAs.find(
+                          (state: State) => state.id === +value,
+                        );
+                        setState(state);
+                        form.resetField("code");
+                        form.resetField("originId");
+                        setOriginStateCode(
+                          statesLGAs.find(
+                            (state: State) =>
+                              state.id ===
+                              staff.officePersonnelInfo?.station?.stateId,
+                          )?.code,
+                        );
+                        setDestinationStateCode(undefined);
+                        form.resetField("destinationId");
+                        setRegion(undefined);
+                        setRoute(undefined);
+                      }}
+                      disabled={!statesLGAs}
+                      // defaultValue={+field.value}
+                      value={state?.id as unknown as string}
+                    >
+                      <SelectTrigger className="">
+                        {state ? (
+                          <SelectValue
+                            placeholder="Select State"
+                            className="w-full"
+                          />
+                        ) : (
+                          "Select State"
+                        )}
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statesLGAs.map((state: State) => (
+                          <SelectItem
+                            key={state.id}
+                            value={state.id as unknown as string}
+                          >
+                            {state.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 {/*Region select*/}
                 {coverage === TripCoverage.REGIONAL &&
@@ -465,6 +564,7 @@ function TripForm() {
                       </Select>
                     </div>
                   )}
+
                 {coverage &&
                   type &&
                   ((coverage === TripCoverage.LASTMAN &&
@@ -480,6 +580,9 @@ function TripForm() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Origin</FormLabel>
+                            <FormDescription>
+                              The station where the trip will start on the route
+                            </FormDescription>
                             <FormControl>
                               <Select
                                 onValueChange={(v) => {
@@ -558,6 +661,35 @@ function TripForm() {
                               </FormItem>
                             )}
                           />
+                          {/*is it a reverse trip*/}
+                          <div className="col-span-2">
+                            <FormField
+                              control={form.control}
+                              name="isReturn"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value}
+                                      onCheckedChange={(v) => {
+                                        field.onChange(v);
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel>
+                                      Is this trip in the opposite direction of
+                                      the route?
+                                    </FormLabel>
+                                    <FormDescription>
+                                      If selected the stations in route will be
+                                      in reverse order
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                           {/* Destination ID Select */}
                           {routeId && (
                             <FormField
@@ -566,21 +698,14 @@ function TripForm() {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Destination</FormLabel>
+                                  <FormDescription>
+                                    The station where the trip will end on the
+                                    route
+                                  </FormDescription>
                                   <FormControl>
                                     <Select
                                       onValueChange={(v) => {
                                         field.onChange(v);
-                                        console.log(
-                                          stationsList.find(
-                                            (station) => station.id === v,
-                                          ),
-                                          stationsList.find(
-                                            (station) => station.id === v,
-                                          )?.state,
-                                          stationsList.find(
-                                            (station) => station.id === v,
-                                          )?.state?.code,
-                                        );
                                         setDestinationStateCode(
                                           stationsList.find(
                                             (station) => station.id === v,
@@ -588,13 +713,13 @@ function TripForm() {
                                         );
                                       }}
                                       defaultValue={field.value}
-                                      disabled={!destinationStations?.length}
+                                      disabled={!destinationStationsList.length}
                                     >
                                       <SelectTrigger>
                                         <SelectValue placeholder="Select destination" />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {destinationStations?.map(
+                                        {destinationStationsList.map(
                                           (destination) => (
                                             <SelectItem
                                               key={destination.id}
@@ -730,9 +855,26 @@ function TripForm() {
                 <Button type="submit" className="w-full md:w-auto">
                   Create Trip
                 </Button>
+                <ConfirmPin
+                  id="add-trip"
+                  action={form.handleSubmit(onSubmit)}
+                />
               </div>
             </form>
           </Form>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader></CardHeader>
+        <CardContent>
+          {mapData?.locations && (
+            <small className="text-red-400">
+              NB: Lines are not for direction but order of movement
+            </small>
+          )}
+          <div className="w-full h-[400px]">
+            {mapData && <RoutingMap {...mapData} />}
+          </div>
         </CardContent>
       </Card>
     </div>
