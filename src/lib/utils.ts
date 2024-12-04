@@ -6,6 +6,7 @@ import {
   RouteType,
   State,
   Station,
+  Trip,
   TripCoverage,
   TripType,
 } from "./custom-types";
@@ -75,6 +76,15 @@ export function routeTripCodeGen(
   const suffix = lastNum ? leftFillNumber(lastNum + 1) : codeGen(6);
   return `${prefix}${suffix}`;
 }
+export function shipmentCodeGen(
+  originCode: string,
+  destinationCode: string | null = null,
+) {
+  const prefix = `${originCode}${destinationCode ? `-${destinationCode}` : ""}-`;
+
+  const suffix = codeGen(8);
+  return `${prefix}${suffix}`;
+}
 
 export function stationNameCodeGen(
   motherStation?: Station,
@@ -120,3 +130,55 @@ export function stationNameGen(
 export const validatePinElementGen = (id: string) => {
   (document.getElementById(id) as HTMLDialogElement)?.click();
 };
+
+export function getAvailableTrips(
+  trips: Trip[],
+  routes: Route[],
+  coverage?: TripCoverage,
+  stationId?: string,
+) {
+  const tripsWithStationIds = trips.map((trip) => {
+    const route = routes.find((route) => route.id === trip.route.id)!;
+    const stationIds = trip.returnTrip
+      ? route.stationIds.reverse()
+      : route.stationIds;
+    const originIndex = stationIds.findIndex((id) => id === trip.origin.id);
+    const destinationIndex = trip.destination.id
+      ? stationIds.findIndex((id) => id === trip.destination.id)
+      : undefined;
+    const tripStationIds = destinationIndex
+      ? stationIds.slice(originIndex, destinationIndex + 1)
+      : [trip.origin.id];
+    return { ...trip, stationIds: tripStationIds };
+  });
+  const allowedTrips = tripsWithStationIds
+    .filter((trip) => {
+      const indexOfStationId = trip.stationIds.findIndex(
+        (id) => id === stationId,
+      );
+      return indexOfStationId !== -1;
+    })
+    .filter((trip) => {
+      if (coverage) {
+        return trip.coverage === coverage;
+      }
+      return true;
+    });
+  return allowedTrips.filter((trip) => {
+    if (coverage === TripCoverage.LASTMAN) return true;
+    if (!trip.currentStationId && !trip.nextStationId) return false;
+    const currentStationIndex = trip.currentStationId
+      ? trip.stationIds.findIndex((id) => id === trip.currentStationId)
+      : undefined;
+    const nextStationIndex = trip.nextStationId
+      ? trip.stationIds.findIndex((id) => id === trip.nextStationId)
+      : undefined;
+    const neededIndex =
+      currentStationIndex !== -1 ? currentStationIndex : nextStationIndex;
+    const indexOfStationId = trip.stationIds.findIndex(
+      (id) => id === stationId,
+    );
+
+    return indexOfStationId >= neededIndex!;
+  });
+}

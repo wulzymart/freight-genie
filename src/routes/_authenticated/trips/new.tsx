@@ -40,6 +40,7 @@ import {
   State,
   Station,
   StationType,
+  Trip,
   TripCoverage,
   TripPersonnel,
   TripPersonnelStatus,
@@ -95,19 +96,19 @@ function TripForm() {
       originId: staff.officePersonnelInfo?.stationId || "",
       destinationId: "",
       routeId: undefined,
-      isReturn: false,
+      returnTrip: false,
     },
   });
   const routeId = form.watch("routeId");
   const coverage = form.watch("coverage");
-  const isReturn = form.watch("isReturn");
+  const isReturn = form.watch("returnTrip");
   const originId = form.watch("originId");
   const destinationId = form.watch("destinationId");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { mutate } = useMutation({
     mutationKey: ["trips"],
-    mutationFn: async (values: z.infer<typeof tripFormSchema>) => {
+    mutationFn: async (values: Partial<Trip>) => {
       const { data }: { data: ApiResponseType } = await axiosInstance.post(
         "/vendor/trips",
         values,
@@ -312,7 +313,9 @@ function TripForm() {
   }, [routeId, coverage, originId, type]);
 
   const onSubmit = (value: z.infer<typeof tripFormSchema>) => {
-    mutate(value, {
+    const trip: Partial<Trip> = value;
+    trip.currentStationId = value.originId;
+    mutate(trip, {
       onSuccess: async (data) => {
         toast({ description: data.message });
         await navigate({ to: `/trips/${data.trip.id}` });
@@ -390,7 +393,6 @@ function TripForm() {
                         <Select
                           onValueChange={(v) => {
                             field.onChange(v);
-                            console.log(v);
                             setState(undefined);
                             form.resetField("routeId");
                             form.setValue(
@@ -665,7 +667,7 @@ function TripForm() {
                           <div className="col-span-2">
                             <FormField
                               control={form.control}
-                              name="isReturn"
+                              name="returnTrip"
                               render={({ field }) => (
                                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                   <FormControl>

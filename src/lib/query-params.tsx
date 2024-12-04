@@ -2,7 +2,10 @@ import {
   OperationEnum,
   RouteCoverage,
   RouteType,
+  TripCoverage,
   TripPersonnelStatus,
+  TripStatus,
+  TripType,
   VehicleCoverage,
   VehicleStatus,
   VehicleType,
@@ -22,6 +25,18 @@ export type RoutesQueryStrings = {
   take?: number;
   skip?: number;
 };
+export type TripsQueryStrings = {
+  coverage?: TripCoverage;
+  type?: TripType;
+  status?: TripStatus;
+  routeId?: number;
+  from?: string;
+  to?: string;
+  order?: { type?: sortOrder; coverage?: sortOrder; code?: sortOrder };
+  take?: number;
+  skip?: number;
+};
+
 export type VehiclesQueryStrings = {
   type?: VehicleType;
   coverage?: VehicleCoverage;

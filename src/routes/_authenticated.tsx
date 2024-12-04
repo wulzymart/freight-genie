@@ -17,6 +17,7 @@ import { AppSidebar } from "@/components/layout-components/menu/app-sidebar.tsx"
 import { Separator } from "@/components/ui/separator.tsx";
 import { User } from "@/lib/custom-types.ts";
 import { getRoutes } from "@/lib/queries/routes.ts";
+import { getTrips } from "@/lib/queries/trips.ts";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: ({ context }) => {
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/_authenticated")({
     const statesLGAs = await queryClient.ensureQueryData(getStatesWithLgas);
     const stations = await queryClient.ensureQueryData(getStations);
     const routes = await queryClient.ensureQueryData(getRoutes);
+    const { trips } = await queryClient.ensureQueryData(getTrips());
     const staffStationId = staff?.officePersonnelInfo?.stationId;
     const staffState = statesLGAs.find(
       (state) =>
@@ -51,6 +53,7 @@ export const Route = createFileRoute("/_authenticated")({
       staffState,
       staffStationId,
       routes,
+      trips,
     };
   },
   component: PageLayout,

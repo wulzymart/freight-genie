@@ -1,13 +1,14 @@
 import * as React from "react";
 import { jwtDecode } from "jwt-decode";
 import { axiosInstance } from "@/lib/axios";
-import {User} from "@/lib/custom-types.ts";
+import { StaffRole, User } from "@/lib/custom-types.ts";
 
 export interface AuthContext {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   user: User;
+  role?: StaffRole;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   token: string | null;
 }
@@ -58,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         {
           email,
           password,
-        }
+        },
       );
       const { accessToken } = res.data;
       setStoredToken(accessToken);
@@ -76,7 +77,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, user, login, logout, setUser, token }}
+      value={{
+        isAuthenticated,
+        user,
+        login,
+        logout,
+        setUser,
+        token,
+        role: user?.staff.role,
+      }}
     >
       {children}
     </AuthContext.Provider>

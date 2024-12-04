@@ -16,6 +16,7 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ApiResponseType,
+  State,
   VehicleCoverage,
   VehicleType,
 } from "@/lib/custom-types.ts";
@@ -41,6 +42,7 @@ import { validatePinElementGen } from "@/lib/utils.ts";
 import { useMutation } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/axios.ts";
 import { useToast } from "@/hooks/use-toast.ts";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/vehicles/add")({
   component: Page,
@@ -59,7 +61,8 @@ function Page() {
     },
   });
   const navigate = useNavigate();
-  const { stations } = useLoaderData({ from: "/_authenticated" });
+  const { stations, statesLGAs } = useLoaderData({ from: "/_authenticated" });
+  const [state, setState] = useState<State | undefined>(undefined);
   const { mutate } = useMutation({
     mutationKey: ["vehicles"],
     mutationFn: async (values: z.infer<typeof addVehicleSchema>) => {
@@ -189,37 +192,81 @@ function Page() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="registeredToId"
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormLabel>Staff Station</FormLabel>
-                    <FormControl>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          form.setValue("currentStationId", value);
-                        }}
-                        defaultValue={field.value}
-                        value={field.value}
+              <div className="flex flex-col gap-3">
+                <FormLabel>State</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    const state = statesLGAs.find(
+                      (state: State) => state.id === +value,
+                    );
+                    setState(state);
+                    form.resetField("registeredToId");
+                    form.resetField("currentStationId");
+                  }}
+                  disabled={!statesLGAs}
+                  // defaultValue={+field.value}
+                  value={state?.id as unknown as string}
+                >
+                  <SelectTrigger className="">
+                    {state ? (
+                      <SelectValue
+                        placeholder="Select State"
+                        className="w-full"
+                      />
+                    ) : (
+                      "Select State"
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statesLGAs.map((state: State) => (
+                      <SelectItem
+                        key={state.id}
+                        value={state.id as unknown as string}
                       >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Station" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {stations.map((station) => (
-                            <SelectItem key={station.id} value={station.id!}>
-                              {station.name} ({station.nickName})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        {state.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {state && (
+                <FormField
+                  control={form.control}
+                  name="registeredToId"
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>Vehicle Station</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue("currentStationId", value);
+                          }}
+                          defaultValue={field.value}
+                          value={field.value}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Station" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {stations
+                              .filter((station) => station.stateId === state.id)
+                              .map((station) => (
+                                <SelectItem
+                                  key={station.id}
+                                  value={station.id!}
+                                >
+                                  {station.name} ({station.nickName})
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
           </CardContent>
           <CardFooter>
@@ -234,7 +281,7 @@ function Page() {
               </Button>
               <ConfirmPin
                 id="vehicle-reg"
-                name="Add staff"
+                name="Add vehicle"
                 action={form.handleSubmit(onSubmit)}
               />
             </div>

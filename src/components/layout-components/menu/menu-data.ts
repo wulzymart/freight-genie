@@ -90,15 +90,15 @@ export const menuData: {
         },
         {
           title: "View Trips",
-          url: "#",
+          url: "/trips",
         },
         {
           title: "New Shipment",
-          url: "#",
+          url: "/shipments/new",
         },
         {
           title: "View Shipments",
-          url: "#",
+          url: "/shipments",
         },
       ],
     },

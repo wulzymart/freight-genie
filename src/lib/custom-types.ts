@@ -131,6 +131,7 @@ export interface History {
   performedBy: any;
   performedById: string;
   createdAt: Date;
+  [key: string]: any;
 }
 
 export type User = {
@@ -153,6 +154,13 @@ export type Staff = {
   lastname: string;
   phoneNumber: string;
   role: StaffRole;
+  orderActions?: History;
+  routeActions?: History;
+  tripActions?: History;
+  shipmentActions?: History;
+  customerActions?: History;
+  corporateCustomerActions?: History;
+  vehicleActions?: History;
   officePersonnelInfo?: OfficePersonnel;
   vehicleAssistantInfo?: TripPersonnel;
   driverInfo?: TripPersonnel;
@@ -201,6 +209,7 @@ export type Route = {
   vehicles: Vehicle[];
   drivers: TripPersonnel[];
   vehicleAssistants: TripPersonnel[];
+  history?: History[];
 };
 
 export enum VehicleCoverage {
@@ -241,6 +250,7 @@ export type Vehicle = {
   currentRoute?: Route; //update with route
   currentTrip?: Trip; // update with trips
   currentTripId?: string;
+  history?: History[];
 };
 
 export enum TripCoverage {
@@ -283,7 +293,11 @@ export type Trip = {
   updatedAt: Date;
   route: Route;
   routeId: number;
-  isReturn: boolean;
+  returnTrip: boolean;
+  routingInfo?: any;
+  currentStationId?: string;
+  nextStationId?: string;
+  history?: History[];
 };
 
 export enum ShipmentStatus {
@@ -314,7 +328,8 @@ export type Shipment = {
   coverage: ShipmentCoverage;
   type: ShipmentType;
   orders: Order[];
-  trip: Trip;
+  trip?: Trip;
+  tripId?: string;
   origin: Station;
   originId: string;
   destination: Station;
@@ -332,7 +347,7 @@ export interface Customer {
   address: { stateId: number; address: string };
   customerType: CustomerType;
   corporateCustomer?: CorporateCustomer;
-  histories: History[];
+  history: History[];
   orders: Order[];
   createdAt: Date;
   updatedAt: Date;
@@ -346,7 +361,7 @@ export type CorporateCustomer = {
   businessName: string;
   businessAddress: { stateId: number; address: string };
   businessPhone: string;
-  histories: History[];
+  history: History[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -426,7 +441,7 @@ export type Order = {
 
   processedBy: OfficePersonnel;
   shipment?: Shipment;
-  histories: History[];
+  history: History[];
   createdAt: Date;
 
   updatedAt: Date;

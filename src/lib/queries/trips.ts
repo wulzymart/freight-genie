@@ -4,12 +4,12 @@ import { axiosInstance } from "@/lib/axios.ts";
 
 export const getTrips = (filter?: string) =>
   queryOptions({
-    queryKey: ["trips", filter],
+    queryKey: filter ? ["trips", filter] : ["trips"],
     queryFn: async (): Promise<{ trips: Trip[]; count: number }> => {
       const {
         data: { success, message, trips, count },
       }: { data: ApiResponseType } = await axiosInstance.get(
-        "/vendor/trips" + "?" + filter,
+        `/vendor/trips${filter ? `?${filter}` : ""}`,
       );
       if (!success) throw new Error(message);
       return { trips, count };

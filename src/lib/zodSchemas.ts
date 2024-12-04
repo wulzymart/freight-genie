@@ -7,10 +7,14 @@ import {
   PaymentType,
   RouteCoverage,
   RouteType,
+  ShipmentCoverage,
+  ShipmentStatus,
+  ShipmentType,
   StaffRole,
   StationOperation,
   StationType,
   TripCoverage,
+  TripStatus,
   TripType,
   TypePricing,
   UserRole,
@@ -475,5 +479,68 @@ export const tripFormSchema = z.object({
     .string()
     .transform((x) => (x ? parseInt(x) : undefined))
     .optional(),
-  isReturn: z.boolean().default(false).optional(),
+  returnTrip: z.boolean().default(false).optional(),
 });
+
+export const TripsQueryStringSchema = z
+  .object({
+    coverage: z.nativeEnum(TripCoverage).optional(),
+    type: z.nativeEnum(TripType).optional(),
+    status: z.nativeEnum(TripStatus).optional(),
+    routeId: z.number().int().positive().optional(),
+    from: z
+      .string()
+      .transform((x) => new Date(x))
+      .optional(),
+    to: z
+      .string()
+      .transform((x) => new Date(x))
+      .optional(),
+    order: z
+      .object({
+        type: z.nativeEnum(sortOrder).optional(),
+        coverage: z.nativeEnum(sortOrder).optional(),
+        code: z.nativeEnum(sortOrder).optional(),
+      })
+      .optional(),
+    take: z.number().int().positive().min(1).max(100).optional(),
+    skip: z.number().int().nonnegative().optional(),
+  })
+  .strict();
+
+export const ShipmentSchema = z
+  .object({
+    code: z.string().min(3, { message: "Please provide a code" }),
+    coverage: z.nativeEnum(ShipmentCoverage),
+    type: z.nativeEnum(ShipmentType),
+    forTransshipment: z.boolean().default(false),
+    tripId: z.string().optional(),
+    originId: stationSchema,
+    destinationId: stationSchema.optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.type === ShipmentType.DIRECT && data.forTransshipment) {
+      return ctx.addIssue({
+        path: ["type"],
+        message:
+          "Direct Shipment cannot be marked for transhipment at origin station",
+        code: "custom",
+      });
+    }
+    if (data.type === ShipmentType.TRANSHIPMENT && !data.forTransshipment) {
+      return ctx.addIssue({
+        path: ["type"],
+        message:
+          "Transhipment Shipments must be marked for transshipment at origin station",
+        code: "custom",
+      });
+    }
+    if (data.coverage === ShipmentCoverage.LOCAL && data.forTransshipment) {
+      return ctx.addIssue({
+        path: ["coverage"],
+        message: "Local Shipment cannot be marked for transhipment",
+        code: "custom",
+      });
+    }
+  });
