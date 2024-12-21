@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Trip, TripStatus } from "@/lib/custom-types.ts";
+import { Shipment, ShipmentStatus } from "@/lib/custom-types.ts";
 import { Link, useRouter } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button.tsx";
 import { EyeIcon, Trash2Icon } from "lucide-react";
@@ -9,15 +9,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/axios.ts";
 import { useToast } from "@/hooks/use-toast.ts";
 
-export const columns: ColumnDef<Trip>[] = [
+export const shipmentColumns: ColumnDef<Shipment>[] = [
   {
     accessorKey: "code",
-    header: "Trip Code",
+    header: "Shipment Code",
   },
-  { accessorKey: "route.code", header: "Route" },
+  // { accessorKey: "route.code", header: "Route" },
   {
     accessorKey: "type",
-    header: "Trip Type",
+    header: "Shipment Type",
   },
   {
     accessorKey: "coverage",
@@ -36,7 +36,7 @@ export const columns: ColumnDef<Trip>[] = [
     header: "Status",
     cell: ({ row }) => (
       <p
-        className={`w-fit px-2 py-1 rounded-lg text-white text-center ${row.original.status === TripStatus.PLANNED ? "bg-teal-500" : row.original.status === TripStatus.ONGOING ? "bg-green-500" : row.original.status === TripStatus.COMPLETED ? "bg-amber-500" : "bg-purple-500"}`}
+        className={`w-fit px-2 py-1 rounded-lg text-white text-center ${row.original.status === ShipmentStatus.CREATED ? "bg-green-500" : row.original.status === ShipmentStatus.LOADED ? "bg-yellow-500" : row.original.status === ShipmentStatus.DELIVERED ? "bg-blue-500" : row.original.status === ShipmentStatus.DELAYED ? "bg-red-500" : "bg-slate-500"}`}
       >
         {row.original.status}
       </p>
@@ -46,8 +46,10 @@ export const columns: ColumnDef<Trip>[] = [
     header: "Vehicle",
     cell: ({ row }) => (
       <div className="space-y-2">
-        <p>{row.original.vehicle?.model}</p>
-        <p className="text-xs">{row.original.vehicle?.registrationNumber}</p>
+        <p>{row.original.trip?.vehicle?.model}</p>
+        <p className="text-xs">
+          {row.original.trip?.vehicle?.registrationNumber}
+        </p>
       </div>
     ),
   },
@@ -56,9 +58,11 @@ export const columns: ColumnDef<Trip>[] = [
     header: () => <p className="w-full text-center">View</p>,
     cell: ({ row }) => {
       const { mutate } = useMutation({
-        mutationKey: ["trip"],
+        mutationKey: ["shipments"],
         mutationFn: async (id: string) => {
-          const { data } = await axiosInstance.delete(`/vendor/trips/${id}`);
+          const { data } = await axiosInstance.delete(
+            `/vendor/shipments/${id}`,
+          );
           if (!data.success) throw new Error(data.message);
           return data.success;
         },
@@ -66,12 +70,12 @@ export const columns: ColumnDef<Trip>[] = [
       const { toast } = useToast();
       const queryClient = useQueryClient();
       const router = useRouter();
-      const deleteTrip = (id: string) => {
+      const deleteShipment = (id: string) => {
         mutate(id, {
           onSuccess: async () => {
-            toast({ description: "Trip deleted" });
+            toast({ description: "Shipment deleted" });
             await router.invalidate();
-            await queryClient.invalidateQueries({ queryKey: ["trips"] });
+            await queryClient.invalidateQueries({ queryKey: ["shipments"] });
             await router.load();
           },
         });
@@ -79,7 +83,7 @@ export const columns: ColumnDef<Trip>[] = [
       const id = row.original.id;
       return (
         <div className="flex gap-4 justify-center">
-          <Link to={`/trips/${id}`}>
+          <Link to={`/shipments/${id}`}>
             <Button variant="outline" size="icon">
               <EyeIcon />
             </Button>
@@ -91,7 +95,7 @@ export const columns: ColumnDef<Trip>[] = [
           >
             <Trash2Icon />
           </Button>
-          <ConfirmPin id={`delete-${id}`} action={() => deleteTrip(id)} />
+          <ConfirmPin id={`delete-${id}`} action={() => deleteShipment(id)} />
         </div>
       );
     },

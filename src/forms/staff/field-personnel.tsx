@@ -53,7 +53,6 @@ export const FieldPersonnelForm = ({
   const { stations, statesLGAs, routes } = useLoaderData({
     from: "/_authenticated",
   });
-  console.log(routes);
   const [state, setState] = useState<State | undefined>(undefined);
   const stateStations = stations.filter(
     (station) => station.stateId === state?.id,
@@ -72,9 +71,16 @@ export const FieldPersonnelForm = ({
   });
   const routeType = form.watch("routeType");
   const coverage = form.watch("routeCoverage");
-  const possibleRoutes = routes.filter(
-    (route) => route.type === routeType && route.coverage === coverage,
-  );
+  const possibleRoutes = routes.filter((route) => {
+    if (state) {
+      return (
+        route.type === routeType &&
+        route.coverage === coverage &&
+        state.code === route.code.split("-")[0]
+      );
+    }
+    return route.type === routeType && route.coverage === coverage;
+  });
   const fieldPersonnel =
     staff.role === StaffRole.DRIVER ? "Driver" : "Assistant";
   const operation = form.watch("operation");
@@ -166,6 +172,7 @@ export const FieldPersonnelForm = ({
                           field.onChange(value);
                           form.resetField("registeredRouteId");
                           form.resetField("currentStationId");
+                          setState(undefined);
                           value === OperationEnum.LASTMAN &&
                             form.resetField("routeCoverage");
                         }}
@@ -188,7 +195,7 @@ export const FieldPersonnelForm = ({
                   </FormItem>
                 )}
               />
-              {operation === OperationEnum.INTERSTATION ? (
+              {operation === OperationEnum.INTERSTATION && (
                 <>
                   <FormField
                     control={form.control}
@@ -201,6 +208,7 @@ export const FieldPersonnelForm = ({
                             onValueChange={(value) => {
                               field.onChange(value);
                               form.resetField("registeredRouteId");
+                              setState(undefined);
                             }}
                             defaultValue={field.value}
                             value={field.value}
@@ -260,7 +268,44 @@ export const FieldPersonnelForm = ({
                       </FormItem>
                     )}
                   />
-
+                  {coverage !== RouteCoverage.INTERSTATE && (
+                    <div className="flex flex-col gap-3">
+                      <FormLabel>Route State</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          const state = statesLGAs.find(
+                            (state: State) => state.id === +value,
+                          );
+                          setState(state);
+                          form.resetField("currentStationId");
+                        }}
+                        disabled={!statesLGAs}
+                        // defaultValue={+field.value}
+                        value={state?.id as unknown as string}
+                      >
+                        <SelectTrigger className="">
+                          {state ? (
+                            <SelectValue
+                              placeholder="Select State"
+                              className="w-full"
+                            />
+                          ) : (
+                            "Select State"
+                          )}
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statesLGAs.map((state: State) => (
+                            <SelectItem
+                              key={state.id}
+                              value={state.id as unknown as string}
+                            >
+                              {state.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <FormField
                     control={form.control}
                     name={"registeredRouteId"}
@@ -332,84 +377,83 @@ export const FieldPersonnelForm = ({
                     )}
                   />
                 </>
-              ) : (
-                ""
+              )}
+              {operation === OperationEnum.LASTMAN && (
+                <>
+                  <div className="flex flex-col gap-3">
+                    <FormLabel>State</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        const state = statesLGAs.find(
+                          (state: State) => state.id === +value,
+                        );
+                        setState(state);
+                        form.resetField("currentStationId");
+                      }}
+                      disabled={!statesLGAs}
+                      // defaultValue={+field.value}
+                      value={state?.id as unknown as string}
+                    >
+                      <SelectTrigger className="">
+                        {state ? (
+                          <SelectValue
+                            placeholder="Select State"
+                            className="w-full"
+                          />
+                        ) : (
+                          "Select State"
+                        )}
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statesLGAs.map((state: State) => (
+                          <SelectItem
+                            key={state.id}
+                            value={state.id as unknown as string}
+                          >
+                            {state.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name={"currentStationId"}
+                    render={({ field }) => (
+                      <FormItem className="w-full">
+                        <FormLabel>Current Station</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              form.setValue("registeredInId", value);
+                            }}
+                            defaultValue={field.value}
+                            value={field.value}
+                            disabled={!stations}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select Station" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {stateStations.map((station) => (
+                                <SelectItem
+                                  key={station.id}
+                                  value={station.id!}
+                                >
+                                  {station.name} ({station.nickName})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
               )}
             </div>
-            {operation === OperationEnum.LASTMAN ? (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-3">
-                  <FormLabel>State</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      const state = statesLGAs.find(
-                        (state: State) => state.id === +value,
-                      );
-                      setState(state);
-                      form.resetField("currentStationId");
-                    }}
-                    disabled={!statesLGAs}
-                    // defaultValue={+field.value}
-                    value={state?.id as unknown as string}
-                  >
-                    <SelectTrigger className="">
-                      {state ? (
-                        <SelectValue
-                          placeholder="Select State"
-                          className="w-full"
-                        />
-                      ) : (
-                        "Select State"
-                      )}
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statesLGAs.map((state: State) => (
-                        <SelectItem
-                          key={state.id}
-                          value={state.id as unknown as string}
-                        >
-                          {state.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <FormField
-                  control={form.control}
-                  name={"currentStationId"}
-                  render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel>Current Station</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue("registeredInId", value);
-                          }}
-                          defaultValue={field.value}
-                          value={field.value}
-                          disabled={!stations}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Station" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {stateStations.map((station) => (
-                              <SelectItem key={station.id} value={station.id!}>
-                                {station.name} ({station.nickName})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            ) : (
-              ""
-            )}
           </CardContent>
           <CardFooter>
             <div className="w-full flex justify-center gap-10">

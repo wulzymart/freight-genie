@@ -14,6 +14,7 @@ import {
   Station,
   StationType,
   Vehicle,
+  VehicleCoverage,
 } from "@/lib/custom-types.ts";
 import { axiosInstance } from "@/lib/axios.ts";
 import {
@@ -68,6 +69,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog.tsx";
 import * as z from "zod";
@@ -437,6 +439,7 @@ const addVehicleSchema = z.object({
 
 function AddVehicle() {
   const id = +Route.useParams().id;
+  const route = Route.useLoaderData();
   const form = useForm<z.infer<typeof addVehicleSchema>>({
     resolver: zodResolver(addVehicleSchema),
     defaultValues: { vehicleId: "" },
@@ -444,6 +447,7 @@ function AddVehicle() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  const [open, setOpen] = useState(false);
   const { mutate } = useMutation({
     mutationKey: ["routes", "route", id],
     mutationFn: async (values: z.infer<typeof addVehicleSchema>) => {
@@ -458,6 +462,7 @@ function AddVehicle() {
   const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const onSubmit = (values: z.infer<typeof addVehicleSchema>) => {
     mutate(values, {
       onSuccess: async (data) => {
@@ -466,18 +471,32 @@ function AddVehicle() {
           queryKey: ["route", +id],
         });
         await router.invalidate();
+        await queryClient.refetchQueries({ queryKey: ["route", +id] });
         await router.load();
+        await navigate({
+          to: `/routes/${id}`,
+          search: { "vehicle-added": true } as any,
+        });
+        setOpen(false);
+        form.reset();
       },
       onError: (error) => {
         toast({ variant: "destructive", description: error.message });
       },
     });
   };
+  const vehicleCoverage =
+    route.coverage === RouteCoverage.INTRASTATE
+      ? VehicleCoverage.INTRASTATE
+      : route.coverage === RouteCoverage.INTERSTATE
+        ? VehicleCoverage.INTERSTATE
+        : VehicleCoverage.REGIONAL;
 
   useEffect(() => {
+    if (!open) return;
     const getVehicles = async () => {
       const { data }: { data: ApiResponseType } = await axiosInstance.get(
-        `/vendor/routes/${id}/vehicles?search=addable`,
+        `/vendor/vehicles?addable=${true}&coverage=${vehicleCoverage}`,
       );
       if (!data.success) throw new Error(data.message);
       return data.vehicles as Vehicle[];
@@ -488,9 +507,9 @@ function AddVehicle() {
         setIsLoading(false);
       })
       .catch(() => setIsError(true));
-  }, []);
+  }, [open]);
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild={true}>
         <div>
           <Button
@@ -503,11 +522,14 @@ function AddVehicle() {
           </Button>
         </div>
       </DialogTrigger>
-      <DialogContent className="md:w-1/2 lg:w-1/3">
+      <DialogContent
+        aria-describedby="Add Vehicle dialogue"
+        title="Add Vehicle"
+        className="md:w-1/2 lg:w-1/3"
+      >
+        <DialogTitle>Add Vehicle to Route</DialogTitle>
         <Card>
-          <CardHeader>
-            <CardTitle>Add Vehicle to Route</CardTitle>
-          </CardHeader>
+          <CardHeader></CardHeader>
           {isLoading ? (
             <p>loading</p>
           ) : (

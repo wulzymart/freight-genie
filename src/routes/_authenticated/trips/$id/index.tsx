@@ -3,6 +3,7 @@ import {
   Coordinate,
   RoutingProfileType,
   StaffRole,
+  TripCoverage,
   TripStatus,
 } from "@/lib/custom-types.ts";
 import { useAuth } from "@/hooks/auth-context.tsx";
@@ -30,13 +31,15 @@ import { BiTrip } from "react-icons/bi";
 import { GiPathDistance } from "react-icons/gi";
 import { RoutingMap } from "@/components/maps/routing.tsx";
 import { GetTripStations } from "@/hooks/trip.ts";
+import { cn } from "@/lib/utils.ts";
 
 export const Route = createFileRoute("/_authenticated/trips/$id/")({
   component: SingleTripPage,
 });
 function SingleTripPage() {
   const trip = useLoaderData({ from: "/_authenticated/trips/$id" });
-  const tripStations = GetTripStations(trip);
+  const tripStations =
+    trip.coverage !== TripCoverage.LASTMAN ? GetTripStations(trip) : undefined;
   const distance = trip.routingInfo
     ? trip.routingInfo.profile === RoutingProfileType.ORS
       ? trip.routingInfo.data.features[0].distance
@@ -83,11 +86,13 @@ function SingleTripPage() {
   const { role } = useAuth();
   return (
     <div className="space-y-6">
-      <TripStations
-        stations={tripStations}
-        currentStationId={trip.currentStationId!}
-        nextStationId={trip.nextStationId!}
-      />
+      {tripStations && (
+        <TripStations
+          stations={tripStations}
+          currentStationId={trip.currentStationId!}
+          nextStationId={trip.nextStationId!}
+        />
+      )}
       <div className="flex justify-end gap-6">
         {trip.status !== TripStatus.COMPLETED && (
           <Button type="button" onClick={handleNext}>
@@ -115,7 +120,14 @@ function SingleTripPage() {
           )}
       </div>
       <div className="px-4 py-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
-        <Card className="w-full shadow-lg lg:col-span-2">
+        <Card
+          className={cn(
+            "w-full shadow-lg",
+            trip.coverage === TripCoverage.LASTMAN
+              ? "md:col-span-2 lg:col-span-3"
+              : "lg:col-span-2",
+          )}
+        >
           <CardHeader className="bg-gray-50 border-b p-6">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
@@ -124,6 +136,12 @@ function SingleTripPage() {
                   Trip {trip.code}
                 </CardTitle>
               </div>
+              <Badge
+                className="text-base capitalize px-4 py-2"
+                variant="outline"
+              >
+                {trip.coverage.toLowerCase().replace("_", " ")}
+              </Badge>
               <Badge
                 variant={
                   trip.status === TripStatus.ONGOING ? "default" : "secondary"
@@ -137,22 +155,24 @@ function SingleTripPage() {
 
           <CardContent className="p-6 space-y-6">
             {/* Route Info */}
-            <section className="grid grid-cols-2 gap-4">
-              <div className="flex items-center space-x-4">
-                <RouteIcon className="w-7 h-7 text-purple-600" />
-                <div>
-                  <h3 className="font-semibold text-lg">Route Details</h3>
-                  <p>{trip.route.code}</p>
+            {trip.route && (
+              <section className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-4">
+                  <RouteIcon className="w-7 h-7 text-purple-600" />
+                  <div>
+                    <h3 className="font-semibold text-lg">Route Details</h3>
+                    <p>{trip.route?.code}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <BiTrip className="w-7 h-7 text-blue-600" />
-                <div>
-                  <h3 className="font-semibold text-lg">Trip Type</h3>
-                  <p className="capitalize">{trip.type.toLowerCase()}</p>
+                <div className="flex items-center space-x-4">
+                  <BiTrip className="w-7 h-7 text-blue-600" />
+                  <div>
+                    <h3 className="font-semibold text-lg">Trip Type</h3>
+                    <p className="capitalize">{trip.type.toLowerCase()}</p>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
             {/* Vehicle Section */}
             <section className="grid grid-cols-2 gap-4 border-t pt-6 mt-6">
               <div className="flex items-center space-x-4">
@@ -217,16 +237,18 @@ function SingleTripPage() {
                   <p className="text-sm text-gray-500">{trip.origin.address}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <MapPin className="w-7 h-7 text-red-600" />
-                <div>
-                  <h3 className="font-semibold text-lg">Destination</h3>
-                  <p>{trip.destination.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {trip.destination.address}
-                  </p>
+              {trip.destination && (
+                <div className="flex items-center space-x-4">
+                  <MapPin className="w-7 h-7 text-red-600" />
+                  <div>
+                    <h3 className="font-semibold text-lg">Destination</h3>
+                    <p>{trip.destination.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {trip.destination.address}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </section>
           </CardContent>
 
@@ -255,9 +277,11 @@ function SingleTripPage() {
             </div>
           </CardFooter>
         </Card>
-        <Card className="max-sm:h-[400px]">
-          <RoutingMap routeStations={tripStations} locations={locations} />
-        </Card>
+        {tripStations && (
+          <Card className="max-sm:h-[400px]">
+            <RoutingMap routeStations={tripStations} locations={locations} />
+          </Card>
+        )}
       </div>
     </div>
   );

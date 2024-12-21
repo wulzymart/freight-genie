@@ -36,6 +36,7 @@ import {
   ApiResponseType,
   Route as RouteInterface,
   RouteCoverage,
+  RouteType,
   StaffRole,
   State,
   Station,
@@ -55,7 +56,7 @@ import { routeTripCodeGen, validatePinElementGen } from "@/lib/utils.ts";
 import {
   TripPersonnelQueryStrings,
   VehiclesQueryStrings,
-} from "@/lib/query-params.tsx";
+} from "@/lib/query-params.ts";
 import { axiosInstance } from "@/lib/axios.ts";
 import qs from "qs";
 import { CustomErrorComponent } from "@/components/error-component.tsx";
@@ -202,10 +203,7 @@ function TripForm() {
   const [destinationStationsList, setDestinationStationsList] = useState<
     Station[]
   >([]);
-  const stationsInOrder = (
-    isReturn: boolean = false,
-    route: RouteInterface,
-  ) => {
+  const stationsInOrder = (isReturn: boolean, route: RouteInterface) => {
     return isReturn ? route.stationIds.reverse() : route.stationIds;
   };
   const setDestinationStations = (
@@ -275,7 +273,7 @@ function TripForm() {
       tripPersonnelSearch.routeCoverage = routeCoverage;
     }
     if (type) {
-      tripPersonnelSearch.routeType = type as any;
+      tripPersonnelSearch.routeType = type as unknown as RouteType;
     }
 
     async function fetchVehicles() {
@@ -315,6 +313,10 @@ function TripForm() {
   const onSubmit = (value: z.infer<typeof tripFormSchema>) => {
     const trip: Partial<Trip> = value;
     trip.currentStationId = value.originId;
+    if (route) {
+      const originIndex = route.stationIds?.indexOf(value.originId);
+      trip.nextStationId = route.stationIds[originIndex + 1];
+    }
     mutate(trip, {
       onSuccess: async (data) => {
         toast({ description: data.message });
@@ -324,12 +326,10 @@ function TripForm() {
         toast({ description: error.message, variant: "destructive" });
       },
     });
-    // Handle form submission
   };
   const [mapData, setMapData] = useState<any>();
 
   const getMapDetails = (
-    isReturn: boolean,
     originId: string,
     route?: RouteInterface,
     destinationId?: string,
@@ -342,7 +342,8 @@ function TripForm() {
       return data;
     }
     if (!route) return;
-    const stationIds = stationsInOrder(isReturn, route);
+    debugger;
+    const stationIds = route.stationIds;
     const originIndex = stationIds.findIndex((id) => id === originId);
     const destinationIndex = stationIds.findIndex((id) => id === destinationId);
     const routeStationIds = stationIds.slice(originIndex, destinationIndex + 1);
@@ -354,12 +355,13 @@ function TripForm() {
       lat: station.latitude,
       long: station.longitude,
     }));
+    console.log(data);
     return data;
   };
   useEffect(() => {
     if (!originId) return;
     if (isReturn && !destinationId) return;
-    const data = getMapDetails(isReturn, originId, route, destinationId);
+    const data = getMapDetails(originId, route, destinationId);
     setMapData(data);
   }, [isReturn, route, originId, destinationId]);
   return (
@@ -372,8 +374,11 @@ function TripForm() {
         <CardContent>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(() =>
-                validatePinElementGen("add-trip"),
+              onSubmit={form.handleSubmit(
+                () => validatePinElementGen("add-trip"),
+                () => {
+                  console.log(form.formState.errors);
+                },
               )}
               className="space-y-6"
             >
@@ -408,9 +413,13 @@ function TripForm() {
                               )?.code,
                             );
                             setDestinationStateCode(undefined);
-                            form.resetField("destinationId");
+                            // @ts-ignore
+                            v === TripCoverage.LASTMAN
+                              ? form.setValue("destinationId", undefined as any)
+                              : form.resetField("destinationId");
                             form.resetField("vehicleId");
                             form.resetField("driverId");
+                            form.resetField("originId");
                             form.resetField("vehicleAssistantId");
                             setRegion(undefined);
                             setRoute(undefined);
@@ -433,7 +442,6 @@ function TripForm() {
                     </FormItem>
                   )}
                 />
-
                 {/* Trip Type Select */}
                 <FormField
                   control={form.control}

@@ -21,7 +21,7 @@ import {
   VehicleCoverage,
   VehicleType,
 } from "./custom-types";
-import { sortOrder } from "@/lib/query-params.tsx";
+import { sortOrder } from "@/lib/query-params.ts";
 
 export const ngPhoneNumbersSchema = z
   .string()
@@ -467,18 +467,20 @@ export const tripFormSchema = z.object({
   driverId: z.string().min(1, "Driver ID is required"),
   vehicleAssistantId: z
     .string()
-    .transform((x) => (x ? x : undefined))
-    .optional(),
+    .optional()
+    .transform((x) => (x ? x : undefined)),
   originId: z.string().min(1, "Origin ID is required"),
-  destinationId: z
-    .string()
-    .min(1, "Destination ID is required")
-    .transform((x) => (x ? x : undefined))
-    .optional(),
+  destinationId: z.union([
+    z
+      .string()
+      .min(1, "Destination ID is required")
+      .transform((x) => (x ? x : undefined)),
+    z.undefined(),
+  ]),
   routeId: z
     .string()
-    .transform((x) => (x ? parseInt(x) : undefined))
-    .optional(),
+    .optional()
+    .transform((x) => (x ? parseInt(x) : undefined)),
   returnTrip: z.boolean().default(false).optional(),
 });
 
@@ -507,7 +509,32 @@ export const TripsQueryStringSchema = z
     skip: z.number().int().nonnegative().optional(),
   })
   .strict();
-
+export const shipmentsQueryStringSchema = z
+  .object({
+    coverage: z.nativeEnum(ShipmentCoverage).optional(),
+    type: z.nativeEnum(ShipmentType).optional(),
+    status: z.nativeEnum(ShipmentStatus).optional(),
+    tripId: z.string().optional(),
+    destinationId: z.string().optional(),
+    from: z
+      .string()
+      .transform((x) => new Date(x))
+      .optional(),
+    to: z
+      .string()
+      .transform((x) => new Date(x))
+      .optional(),
+    order: z
+      .object({
+        type: z.nativeEnum(sortOrder).optional(),
+        coverage: z.nativeEnum(sortOrder).optional(),
+        code: z.nativeEnum(sortOrder).optional(),
+      })
+      .optional(),
+    take: z.number().int().positive().min(1).max(100).optional(),
+    skip: z.number().int().nonnegative().optional(),
+  })
+  .strict();
 export const ShipmentSchema = z
   .object({
     code: z.string().min(3, { message: "Please provide a code" }),

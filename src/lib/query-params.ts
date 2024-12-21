@@ -2,6 +2,9 @@ import {
   OperationEnum,
   RouteCoverage,
   RouteType,
+  ShipmentCoverage,
+  ShipmentStatus,
+  ShipmentType,
   TripCoverage,
   TripPersonnelStatus,
   TripStatus,
@@ -30,6 +33,18 @@ export type TripsQueryStrings = {
   type?: TripType;
   status?: TripStatus;
   routeId?: number;
+  from?: string;
+  to?: string;
+  order?: { type?: sortOrder; coverage?: sortOrder; code?: sortOrder };
+  take?: number;
+  skip?: number;
+};
+export type ShipmentsQueryStrings = {
+  coverage?: ShipmentCoverage;
+  type?: ShipmentType;
+  status?: ShipmentStatus;
+  routeId?: number;
+  tripId?: string;
   from?: string;
   to?: string;
   order?: { type?: sortOrder; coverage?: sortOrder; code?: sortOrder };

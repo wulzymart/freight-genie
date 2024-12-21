@@ -1,26 +1,56 @@
-import {createFileRoute, useLoaderData, useRouter} from "@tanstack/react-router";
-import {zodResolver} from "@hookform/resolvers/zod";
-import {useForm} from "react-hook-form";
+import {
+  createFileRoute,
+  useLoaderData,
+  useRouter,
+} from "@tanstack/react-router";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import {Button} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
-import {useState} from "react";
+import { useState } from "react";
 
-import {compare, stationNameCodeGen} from "@/lib/utils";
-import {stationFormSchema} from "@/lib/zodSchemas";
+import { compare, stationNameCodeGen } from "@/lib/utils";
+import { stationFormSchema } from "@/lib/zodSchemas";
 import FormInput from "@/components/form-input";
 import FormTextarea from "@/components/form-textarea";
 import ConfirmPin from "@/components/confirm-pin";
-import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,} from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import TitleCard from "@/components/page-components/title";
-import {useMutation, useQueryClient} from "@tanstack/react-query";
-import {axiosInstance} from "@/lib/axios";
-import {Lga, StaffRole, State, Station, StationType} from "@/lib/custom-types";
-import {useToast} from "@/hooks/use-toast";
-import {CustomErrorComponent} from "@/components/error-component.tsx";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { axiosInstance } from "@/lib/axios";
+import {
+  Lga,
+  StaffRole,
+  State,
+  Station,
+  StationType,
+} from "@/lib/custom-types";
+import { useToast } from "@/hooks/use-toast";
+import { CustomErrorComponent } from "@/components/error-component.tsx";
 export const Route = createFileRoute("/_authenticated/stations/add")({
   component: () => (
     <main className="grid gap-8">
@@ -31,20 +61,21 @@ export const Route = createFileRoute("/_authenticated/stations/add")({
       <StationForm />
     </main>
   ),
-  beforeLoad: ({context}) => {
-    const {user} = context.auth
-    if (user.staff.role !== StaffRole.DIRECTOR) throw new Error("You are not authorized to access this page")
+  beforeLoad: ({ context }) => {
+    const { user } = context.auth;
+    if (user.staff.role !== StaffRole.DIRECTOR)
+      throw new Error("You are not authorized to access this page");
   },
-  errorComponent: ({error}) => {
+  errorComponent: ({ error }) => {
     return <CustomErrorComponent errorMessage={error.message} />;
-  }
+  },
 });
 const StationForm = () => {
-  const {stations, statesLGAs} = useLoaderData({from: '/_authenticated'})
+  const { stations, statesLGAs } = useLoaderData({ from: "/_authenticated" });
   const { toast } = useToast();
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   const regionalStations = stations?.filter(
-    (station: Station) => station.type === StationType.REGIONAL
+    (station: Station) => station.type === StationType.REGIONAL,
   );
 
   const form = useForm<z.infer<typeof stationFormSchema>>({
@@ -65,12 +96,9 @@ const StationForm = () => {
   });
   const type = form.watch("type");
 
-  const {
-    formState: { errors },
-  } = form;
   let stateId = form.watch("stateId");
   const stateRegionalStations = regionalStations?.filter(
-    (station: Station) => station.stateId === parseInt(stateId)
+    (station: Station) => station.stateId === parseInt(stateId),
   );
   const [lgas, setLgas] = useState<Lga[]>([]);
   function getLGAs(stateId: number) {
@@ -96,20 +124,20 @@ const StationForm = () => {
     values.phoneNumbers = values.phoneNumbers.split(" ") as any;
 
     mutate(values, {
-      onSuccess:  (data) => {
+      onSuccess: (data) => {
         toast({
           description: data.message,
         });
 
-        queryClient.refetchQueries({queryKey: ['stations']}).then(() =>
-        router.invalidate().then(async () => {
-          await router.load()
-          form.reset()
-        }))
-
+        queryClient.refetchQueries({ queryKey: ["stations"] }).then(() =>
+          router.invalidate().then(async () => {
+            await router.load();
+            form.reset();
+          }),
+        );
       },
       onError: (error) => {
-        console.log(error)
+        console.log(error);
         toast({
           description: error.message,
           variant: "destructive",
@@ -121,11 +149,11 @@ const StationForm = () => {
   const setStationName = (
     type: StationType,
     motherStationId?: string,
-    stateId?: string
+    stateId?: string,
   ) => {
     if (type === StationType.LOCAL && motherStationId) {
       const motherStation = regionalStations?.find(
-        (station: Station) => station.id === motherStationId
+        (station: Station) => station.id === motherStationId,
       );
       const { name, code } = stationNameCodeGen(motherStation);
       form.setValue("name", name);
@@ -135,7 +163,7 @@ const StationForm = () => {
       const { name, code } = stationNameCodeGen(
         undefined,
         state,
-        stateRegionalStations
+        stateRegionalStations,
       );
       form.setValue("code", code);
       form.setValue("name", name);
@@ -144,10 +172,7 @@ const StationForm = () => {
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(validatePin, () => {
-          console.log(errors);
-          console.log(form.getValues());
-        })}
+        onSubmit={form.handleSubmit(validatePin)}
         className="flex flex-col gap-8"
       >
         <Card className="w-full">
@@ -156,96 +181,90 @@ const StationForm = () => {
             <CardDescription></CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="stateId"
-                  render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel>State</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            setLgas(getLGAs(+value)!);
-                            form.resetField("lgaId");
-                            setStationName(
-                              type,
-                              undefined,
-                              ''+statesLGAs.find(
-                                (state: State) => state.id === +field.value
-                              )?.id
-                            );
-                          }}
-                          // defaultValue={+field.value}
-                          value={
-                            +field.value as any
-                          }
-                        >
-                          <SelectTrigger className="w-full">
-                            {field.value ? (
-                              <SelectValue
-                                placeholder="Select State"
-                                className="w-full"
-                              />
-                            ) : (
-                              "Select State"
-                            )}
-                          </SelectTrigger>
-                          <SelectContent>
-                            {statesLGAs.map((state: State) => (
-                              <SelectItem
-                                key={state.id}
-                                value={+state.id as any}
-                              >
-                                {state.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lgaId"
-                  render={({ field }) => (
-                    <FormItem className="w-full">
-                      <FormLabel>LGA</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          // defaultValue={field.value}
-                          value={
-                            +field.value as any
-                          }
-                        >
-                          <SelectTrigger disabled={!stateId} className="w-full">
-                            {field.value ? (
-                              <SelectValue
-                                placeholder="Select LGA"
-                                className="w-full"
-                              />
-                            ) : (
-                              "Select LGA"
-                            )}
-                          </SelectTrigger>
-                          <SelectContent>
-                            {lgas?.sort(compare).map((lga: Lga) => (
-                              <SelectItem key={lga.id} value={lga.id as any}>
-                                {lga.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="stateId"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormLabel>State</FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setLgas(getLGAs(+value)!);
+                          form.resetField("lgaId");
+                          setStationName(
+                            type,
+                            undefined,
+                            "" +
+                              statesLGAs.find(
+                                (state: State) => state.id === +field.value,
+                              )?.id,
+                          );
+                        }}
+                        // defaultValue={+field.value}
+                        value={+field.value as any}
+                      >
+                        <SelectTrigger className="w-full">
+                          {field.value ? (
+                            <SelectValue
+                              placeholder="Select State"
+                              className="w-full"
+                            />
+                          ) : (
+                            "Select State"
+                          )}
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statesLGAs.map((state: State) => (
+                            <SelectItem key={state.id} value={+state.id as any}>
+                              {state.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lgaId"
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormLabel>LGA</FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        // defaultValue={field.value}
+                        value={+field.value as any}
+                      >
+                        <SelectTrigger disabled={!stateId} className="w-full">
+                          {field.value ? (
+                            <SelectValue
+                              placeholder="Select LGA"
+                              className="w-full"
+                            />
+                          ) : (
+                            "Select LGA"
+                          )}
+                        </SelectTrigger>
+                        <SelectContent>
+                          {lgas?.sort(compare).map((lga: Lga) => (
+                            <SelectItem key={lga.id} value={lga.id as any}>
+                              {lga.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <div className="grid grid-flow-col gap-4">
               <FormField
                 control={form.control}
@@ -260,13 +279,13 @@ const StationForm = () => {
 
                           form.setValue(
                             "regionalStationId",
-                            value === StationType.LOCAL ? "" : undefined
+                            value === StationType.LOCAL ? "" : undefined,
                           );
 
                           setStationName(
                             value as StationType,
                             value === StationType.LOCAL ? "" : undefined,
-                            value === StationType.LOCAL ? undefined : stateId
+                            value === StationType.LOCAL ? undefined : stateId,
                           );
                         }}
                         value={field.value}

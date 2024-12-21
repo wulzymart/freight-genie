@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/command.tsx";
 import { cn } from "@/lib/utils.ts";
 
-export function TripTable() {
+export function ShipmentsTable() {
   const { trips: data, count } = useLoaderData({
     from: "/_authenticated/trips/",
   });

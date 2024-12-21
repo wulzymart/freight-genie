@@ -138,22 +138,30 @@ export function getAvailableTrips(
   stationId?: string,
 ) {
   const tripsWithStationIds = trips.map((trip) => {
-    const route = routes.find((route) => route.id === trip.route.id)!;
-    const stationIds = trip.returnTrip
-      ? route.stationIds.reverse()
-      : route.stationIds;
-    const originIndex = stationIds.findIndex((id) => id === trip.origin.id);
-    const destinationIndex = trip.destination.id
-      ? stationIds.findIndex((id) => id === trip.destination.id)
+    const route =
+      trip.coverage !== TripCoverage.LASTMAN
+        ? routes.find((route) => route.id === trip.route.id)
+        : undefined;
+    const stationIds =
+      trip.coverage !== TripCoverage.LASTMAN
+        ? trip.returnTrip
+          ? route?.stationIds.reverse()
+          : route?.stationIds
+        : undefined;
+    const originIndex = stationIds?.findIndex((id) => id === trip.origin.id);
+    const destinationIndex = stationIds
+      ? trip.destination.id
+        ? stationIds.findIndex((id) => id === trip.destination.id)
+        : undefined
       : undefined;
     const tripStationIds = destinationIndex
-      ? stationIds.slice(originIndex, destinationIndex + 1)
+      ? stationIds?.slice(originIndex, destinationIndex + 1)
       : [trip.origin.id];
     return { ...trip, stationIds: tripStationIds };
   });
   const allowedTrips = tripsWithStationIds
     .filter((trip) => {
-      const indexOfStationId = trip.stationIds.findIndex(
+      const indexOfStationId = trip.stationIds?.findIndex(
         (id) => id === stationId,
       );
       return indexOfStationId !== -1;
@@ -168,17 +176,20 @@ export function getAvailableTrips(
     if (coverage === TripCoverage.LASTMAN) return true;
     if (!trip.currentStationId && !trip.nextStationId) return false;
     const currentStationIndex = trip.currentStationId
-      ? trip.stationIds.findIndex((id) => id === trip.currentStationId)
+      ? trip?.stationIds?.findIndex((id) => id === trip.currentStationId)
       : undefined;
     const nextStationIndex = trip.nextStationId
-      ? trip.stationIds.findIndex((id) => id === trip.nextStationId)
+      ? trip?.stationIds?.findIndex((id) => id === trip.nextStationId)
       : undefined;
     const neededIndex =
       currentStationIndex !== -1 ? currentStationIndex : nextStationIndex;
-    const indexOfStationId = trip.stationIds.findIndex(
+    const indexOfStationId = trip?.stationIds?.findIndex(
       (id) => id === stationId,
     );
 
-    return indexOfStationId >= neededIndex!;
+    return (
+      trip.coverage === TripCoverage.LASTMAN ||
+      indexOfStationId! >= neededIndex!
+    );
   });
 }

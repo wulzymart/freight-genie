@@ -17,12 +17,14 @@ import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
 import { Route as AuthenticatedVehiclesImport } from './routes/_authenticated/vehicles'
 import { Route as AuthenticatedTripsImport } from './routes/_authenticated/trips'
+import { Route as AuthenticatedShipmentsImport } from './routes/_authenticated/shipments'
 import { Route as AuthenticatedSetupImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedRoutesImport } from './routes/_authenticated/routes'
 import { Route as AuthenticatedDashboardImport } from './routes/_authenticated/dashboard'
 import { Route as unauthenticatedLoginImport } from './routes/(unauthenticated)/login'
 import { Route as AuthenticatedVehiclesIndexImport } from './routes/_authenticated/vehicles/index'
 import { Route as AuthenticatedTripsIndexImport } from './routes/_authenticated/trips/index'
+import { Route as AuthenticatedShipmentsIndexImport } from './routes/_authenticated/shipments/index'
 import { Route as AuthenticatedRoutesIndexImport } from './routes/_authenticated/routes/index'
 import { Route as AuthenticatedVehiclesAddImport } from './routes/_authenticated/vehicles/add'
 import { Route as AuthenticatedVehiclesIdImport } from './routes/_authenticated/vehicles/$id'
@@ -82,6 +84,11 @@ const AuthenticatedTripsRoute = AuthenticatedTripsImport.update({
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
+const AuthenticatedShipmentsRoute = AuthenticatedShipmentsImport.update({
+  path: '/shipments',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+
 const AuthenticatedSetupRoute = AuthenticatedSetupImport.update({
   path: '/setup',
   getParentRoute: () => AuthenticatedRoute,
@@ -113,6 +120,12 @@ const AuthenticatedTripsIndexRoute = AuthenticatedTripsIndexImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedTripsRoute,
 } as any)
+
+const AuthenticatedShipmentsIndexRoute =
+  AuthenticatedShipmentsIndexImport.update({
+    path: '/',
+    getParentRoute: () => AuthenticatedShipmentsRoute,
+  } as any)
 
 const AuthenticatedRoutesIndexRoute = AuthenticatedRoutesIndexImport.update({
   path: '/',
@@ -150,13 +163,13 @@ const AuthenticatedStaffAddRoute = AuthenticatedStaffAddImport.update({
 } as any)
 
 const AuthenticatedShipmentsNewRoute = AuthenticatedShipmentsNewImport.update({
-  path: '/shipments/new',
-  getParentRoute: () => AuthenticatedRoute,
+  path: '/new',
+  getParentRoute: () => AuthenticatedShipmentsRoute,
 } as any)
 
 const AuthenticatedShipmentsIdRoute = AuthenticatedShipmentsIdImport.update({
-  path: '/shipments/$id',
-  getParentRoute: () => AuthenticatedRoute,
+  path: '/$id',
+  getParentRoute: () => AuthenticatedShipmentsRoute,
 } as any)
 
 const AuthenticatedSetupItemTypesRoute =
@@ -330,6 +343,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSetupImport
       parentRoute: typeof AuthenticatedImport
     }
+    '/_authenticated/shipments': {
+      id: '/_authenticated/shipments'
+      path: '/shipments'
+      fullPath: '/shipments'
+      preLoaderRoute: typeof AuthenticatedShipmentsImport
+      parentRoute: typeof AuthenticatedImport
+    }
     '/_authenticated/trips': {
       id: '/_authenticated/trips'
       path: '/trips'
@@ -409,17 +429,17 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/shipments/$id': {
       id: '/_authenticated/shipments/$id'
-      path: '/shipments/$id'
+      path: '/$id'
       fullPath: '/shipments/$id'
       preLoaderRoute: typeof AuthenticatedShipmentsIdImport
-      parentRoute: typeof AuthenticatedImport
+      parentRoute: typeof AuthenticatedShipmentsImport
     }
     '/_authenticated/shipments/new': {
       id: '/_authenticated/shipments/new'
-      path: '/shipments/new'
+      path: '/new'
       fullPath: '/shipments/new'
       preLoaderRoute: typeof AuthenticatedShipmentsNewImport
-      parentRoute: typeof AuthenticatedImport
+      parentRoute: typeof AuthenticatedShipmentsImport
     }
     '/_authenticated/staff/add': {
       id: '/_authenticated/staff/add'
@@ -469,6 +489,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/routes/'
       preLoaderRoute: typeof AuthenticatedRoutesIndexImport
       parentRoute: typeof AuthenticatedRoutesImport
+    }
+    '/_authenticated/shipments/': {
+      id: '/_authenticated/shipments/'
+      path: '/'
+      fullPath: '/shipments/'
+      preLoaderRoute: typeof AuthenticatedShipmentsIndexImport
+      parentRoute: typeof AuthenticatedShipmentsImport
     }
     '/_authenticated/trips/': {
       id: '/_authenticated/trips/'
@@ -613,6 +640,24 @@ const AuthenticatedSetupRouteChildren: AuthenticatedSetupRouteChildren = {
 const AuthenticatedSetupRouteWithChildren =
   AuthenticatedSetupRoute._addFileChildren(AuthenticatedSetupRouteChildren)
 
+interface AuthenticatedShipmentsRouteChildren {
+  AuthenticatedShipmentsIdRoute: typeof AuthenticatedShipmentsIdRoute
+  AuthenticatedShipmentsNewRoute: typeof AuthenticatedShipmentsNewRoute
+  AuthenticatedShipmentsIndexRoute: typeof AuthenticatedShipmentsIndexRoute
+}
+
+const AuthenticatedShipmentsRouteChildren: AuthenticatedShipmentsRouteChildren =
+  {
+    AuthenticatedShipmentsIdRoute: AuthenticatedShipmentsIdRoute,
+    AuthenticatedShipmentsNewRoute: AuthenticatedShipmentsNewRoute,
+    AuthenticatedShipmentsIndexRoute: AuthenticatedShipmentsIndexRoute,
+  }
+
+const AuthenticatedShipmentsRouteWithChildren =
+  AuthenticatedShipmentsRoute._addFileChildren(
+    AuthenticatedShipmentsRouteChildren,
+  )
+
 interface AuthenticatedTripsIdRouteChildren {
   AuthenticatedTripsIdEditRoute: typeof AuthenticatedTripsIdEditRoute
   AuthenticatedTripsIdIndexRoute: typeof AuthenticatedTripsIdIndexRoute
@@ -715,13 +760,12 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedRoutesRoute: typeof AuthenticatedRoutesRouteWithChildren
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRouteWithChildren
+  AuthenticatedShipmentsRoute: typeof AuthenticatedShipmentsRouteWithChildren
   AuthenticatedTripsRoute: typeof AuthenticatedTripsRouteWithChildren
   AuthenticatedVehiclesRoute: typeof AuthenticatedVehiclesRouteWithChildren
   AuthenticatedCustomersAddRoute: typeof AuthenticatedCustomersAddRoute
   AuthenticatedOrdersIdRoute: typeof AuthenticatedOrdersIdRouteWithChildren
   AuthenticatedOrdersNewRoute: typeof AuthenticatedOrdersNewRoute
-  AuthenticatedShipmentsIdRoute: typeof AuthenticatedShipmentsIdRoute
-  AuthenticatedShipmentsNewRoute: typeof AuthenticatedShipmentsNewRoute
   AuthenticatedStaffAddRoute: typeof AuthenticatedStaffAddRoute
   AuthenticatedStationsAddRoute: typeof AuthenticatedStationsAddRoute
   AuthenticatedCustomersCorporateIdRoute: typeof AuthenticatedCustomersCorporateIdRouteWithChildren
@@ -734,13 +778,12 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedRoutesRoute: AuthenticatedRoutesRouteWithChildren,
   AuthenticatedSetupRoute: AuthenticatedSetupRouteWithChildren,
+  AuthenticatedShipmentsRoute: AuthenticatedShipmentsRouteWithChildren,
   AuthenticatedTripsRoute: AuthenticatedTripsRouteWithChildren,
   AuthenticatedVehiclesRoute: AuthenticatedVehiclesRouteWithChildren,
   AuthenticatedCustomersAddRoute: AuthenticatedCustomersAddRoute,
   AuthenticatedOrdersIdRoute: AuthenticatedOrdersIdRouteWithChildren,
   AuthenticatedOrdersNewRoute: AuthenticatedOrdersNewRoute,
-  AuthenticatedShipmentsIdRoute: AuthenticatedShipmentsIdRoute,
-  AuthenticatedShipmentsNewRoute: AuthenticatedShipmentsNewRoute,
   AuthenticatedStaffAddRoute: AuthenticatedStaffAddRoute,
   AuthenticatedStationsAddRoute: AuthenticatedStationsAddRoute,
   AuthenticatedCustomersCorporateIdRoute:
@@ -763,6 +806,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/routes': typeof AuthenticatedRoutesRouteWithChildren
   '/setup': typeof AuthenticatedSetupRouteWithChildren
+  '/shipments': typeof AuthenticatedShipmentsRouteWithChildren
   '/trips': typeof AuthenticatedTripsRouteWithChildren
   '/vehicles': typeof AuthenticatedVehiclesRouteWithChildren
   '/customers/add': typeof AuthenticatedCustomersAddRoute
@@ -783,6 +827,7 @@ export interface FileRoutesByFullPath {
   '/vehicles/$id': typeof AuthenticatedVehiclesIdRoute
   '/vehicles/add': typeof AuthenticatedVehiclesAddRoute
   '/routes/': typeof AuthenticatedRoutesIndexRoute
+  '/shipments/': typeof AuthenticatedShipmentsIndexRoute
   '/trips/': typeof AuthenticatedTripsIndexRoute
   '/vehicles/': typeof AuthenticatedVehiclesIndexRoute
   '/customers/corporate/$id': typeof AuthenticatedCustomersCorporateIdRouteWithChildren
@@ -819,6 +864,7 @@ export interface FileRoutesByTo {
   '/vehicles/$id': typeof AuthenticatedVehiclesIdRoute
   '/vehicles/add': typeof AuthenticatedVehiclesAddRoute
   '/routes': typeof AuthenticatedRoutesIndexRoute
+  '/shipments': typeof AuthenticatedShipmentsIndexRoute
   '/trips': typeof AuthenticatedTripsIndexRoute
   '/vehicles': typeof AuthenticatedVehiclesIndexRoute
   '/customers/corporate/add': typeof AuthenticatedCustomersCorporateAddRoute
@@ -840,6 +886,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/routes': typeof AuthenticatedRoutesRouteWithChildren
   '/_authenticated/setup': typeof AuthenticatedSetupRouteWithChildren
+  '/_authenticated/shipments': typeof AuthenticatedShipmentsRouteWithChildren
   '/_authenticated/trips': typeof AuthenticatedTripsRouteWithChildren
   '/_authenticated/vehicles': typeof AuthenticatedVehiclesRouteWithChildren
   '/_authenticated/customers/add': typeof AuthenticatedCustomersAddRoute
@@ -860,6 +907,7 @@ export interface FileRoutesById {
   '/_authenticated/vehicles/$id': typeof AuthenticatedVehiclesIdRoute
   '/_authenticated/vehicles/add': typeof AuthenticatedVehiclesAddRoute
   '/_authenticated/routes/': typeof AuthenticatedRoutesIndexRoute
+  '/_authenticated/shipments/': typeof AuthenticatedShipmentsIndexRoute
   '/_authenticated/trips/': typeof AuthenticatedTripsIndexRoute
   '/_authenticated/vehicles/': typeof AuthenticatedVehiclesIndexRoute
   '/_authenticated/customers/corporate/$id': typeof AuthenticatedCustomersCorporateIdRouteWithChildren
@@ -886,6 +934,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/routes'
     | '/setup'
+    | '/shipments'
     | '/trips'
     | '/vehicles'
     | '/customers/add'
@@ -906,6 +955,7 @@ export interface FileRouteTypes {
     | '/vehicles/$id'
     | '/vehicles/add'
     | '/routes/'
+    | '/shipments/'
     | '/trips/'
     | '/vehicles/'
     | '/customers/corporate/$id'
@@ -941,6 +991,7 @@ export interface FileRouteTypes {
     | '/vehicles/$id'
     | '/vehicles/add'
     | '/routes'
+    | '/shipments'
     | '/trips'
     | '/vehicles'
     | '/customers/corporate/add'
@@ -960,6 +1011,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/routes'
     | '/_authenticated/setup'
+    | '/_authenticated/shipments'
     | '/_authenticated/trips'
     | '/_authenticated/vehicles'
     | '/_authenticated/customers/add'
@@ -980,6 +1032,7 @@ export interface FileRouteTypes {
     | '/_authenticated/vehicles/$id'
     | '/_authenticated/vehicles/add'
     | '/_authenticated/routes/'
+    | '/_authenticated/shipments/'
     | '/_authenticated/trips/'
     | '/_authenticated/vehicles/'
     | '/_authenticated/customers/corporate/$id'
@@ -1036,13 +1089,12 @@ export const routeTree = rootRoute
         "/_authenticated/dashboard",
         "/_authenticated/routes",
         "/_authenticated/setup",
+        "/_authenticated/shipments",
         "/_authenticated/trips",
         "/_authenticated/vehicles",
         "/_authenticated/customers/add",
         "/_authenticated/orders/$id",
         "/_authenticated/orders/new",
-        "/_authenticated/shipments/$id",
-        "/_authenticated/shipments/new",
         "/_authenticated/staff/add",
         "/_authenticated/stations/add",
         "/_authenticated/customers/corporate/$id",
@@ -1075,6 +1127,15 @@ export const routeTree = rootRoute
         "/_authenticated/setup/config",
         "/_authenticated/setup/item-categories",
         "/_authenticated/setup/item-types"
+      ]
+    },
+    "/_authenticated/shipments": {
+      "filePath": "_authenticated/shipments.tsx",
+      "parent": "/_authenticated",
+      "children": [
+        "/_authenticated/shipments/$id",
+        "/_authenticated/shipments/new",
+        "/_authenticated/shipments/"
       ]
     },
     "/_authenticated/trips": {
@@ -1138,11 +1199,11 @@ export const routeTree = rootRoute
     },
     "/_authenticated/shipments/$id": {
       "filePath": "_authenticated/shipments/$id.tsx",
-      "parent": "/_authenticated"
+      "parent": "/_authenticated/shipments"
     },
     "/_authenticated/shipments/new": {
       "filePath": "_authenticated/shipments/new.tsx",
-      "parent": "/_authenticated"
+      "parent": "/_authenticated/shipments"
     },
     "/_authenticated/staff/add": {
       "filePath": "_authenticated/staff/add.tsx",
@@ -1175,6 +1236,10 @@ export const routeTree = rootRoute
     "/_authenticated/routes/": {
       "filePath": "_authenticated/routes/index.tsx",
       "parent": "/_authenticated/routes"
+    },
+    "/_authenticated/shipments/": {
+      "filePath": "_authenticated/shipments/index.tsx",
+      "parent": "/_authenticated/shipments"
     },
     "/_authenticated/trips/": {
       "filePath": "_authenticated/trips/index.tsx",

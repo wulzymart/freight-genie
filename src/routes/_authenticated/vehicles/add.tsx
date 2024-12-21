@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ApiResponseType,
   State,
+  StationType,
   VehicleCoverage,
   VehicleType,
 } from "@/lib/custom-types.ts";
@@ -61,6 +62,7 @@ function Page() {
     },
   });
   const navigate = useNavigate();
+  const coverage = form.watch("coverage");
   const { stations, statesLGAs } = useLoaderData({ from: "/_authenticated" });
   const [state, setState] = useState<State | undefined>(undefined);
   const { mutate } = useMutation({
@@ -164,6 +166,8 @@ function Page() {
                       <Select
                         onValueChange={(value) => {
                           field.onChange(value);
+                          form.resetField("registeredToId");
+                          form.resetField("currentStationId");
                         }}
                         value={field.value}
                       >
@@ -251,6 +255,21 @@ function Page() {
                           <SelectContent>
                             {stations
                               .filter((station) => station.stateId === state.id)
+                              .filter((station) => {
+                                if (
+                                  coverage &&
+                                  coverage === VehicleCoverage.INTERSTATE
+                                ) {
+                                  return station.type === StationType.REGIONAL;
+                                }
+                                if (
+                                  coverage &&
+                                  coverage === VehicleCoverage.INTRASTATE
+                                ) {
+                                  return station.type === StationType.REGIONAL;
+                                }
+                                return true;
+                              })
                               .map((station) => (
                                 <SelectItem
                                   key={station.id}

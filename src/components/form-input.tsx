@@ -59,7 +59,6 @@ const FormInput = ({
                   let value: string | number = e.currentTarget.value;
                   if (type === "number") value = +value;
                   else {
-                    value = value.trim();
                     if (caseTransform) {
                       if (caseTransform === "upper")
                         value = value.toUpperCase();

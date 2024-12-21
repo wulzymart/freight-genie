@@ -30,7 +30,7 @@ import { getVendorConfig } from "@/lib/queries/vendor-config";
 import { vendorConfigSchema } from "@/lib/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import {useLoaderData, useRouter} from "@tanstack/react-router";
+import { useLoaderData, useRouter } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -50,15 +50,15 @@ export const Route = createFileRoute("/_authenticated/setup/config")({
 });
 
 const ConfigForm = () => {
-  const vendor = useLoaderData({from: '__root__'})
-  const {reloadVendor} = useVendor()
+  const vendor = useLoaderData({ from: "__root__" });
+  const { reloadVendor } = useVendor();
   const { data: config, refetch: refetchConfig } =
     useSuspenseQuery(getVendorConfig);
   const { mutate: createConfig } = useMutation({
     mutationFn: async (values: z.infer<typeof vendorConfigSchema>) => {
       const { data }: { data: ApiResponseType } = await axiosInstance.post(
         "/vendor/config",
-        values
+        values,
       );
       if (!data.success) throw Error(data.message);
       return data;
@@ -70,7 +70,7 @@ const ConfigForm = () => {
       if (!config?.id) return;
       const { data }: { data: ApiResponseType } = await axiosInstance.patch(
         "/vendor/config",
-        { ...values, id: config?.id }
+        { ...values, id: config?.id },
       );
       if (!data.success) throw Error(data.message);
       return data;
@@ -80,21 +80,19 @@ const ConfigForm = () => {
   const validatePin = () => {
     (document.getElementById("config-submit") as HTMLDialogElement)?.click();
   };
-  const {
-    stations
-  } = useLoaderData({from: '/_authenticated'});
+  const { stations } = useLoaderData({ from: "/_authenticated" });
   const [isEditing, setIsEditing] = useState(!config);
   const form = useForm<z.infer<typeof vendorConfigSchema>>({
     resolver: zodResolver(vendorConfigSchema),
     defaultValues: {
-      expressFactor: config?.expressFactor||0,
+      expressFactor: config?.expressFactor || 0,
       hqId: config?.hqId || "",
-      customerCareLine: config?.customerCareLine|| "",
-      vat: config.vat || 0,
-      insuranceFactor: config.insuranceFactor|| 0,
-      ecommerceFactor: config.ecommerceFactor||0,
-      dim: config.dim|| 5000,
-      localFactor: config.localFactor|| 0.8,
+      customerCareLine: config?.customerCareLine || "",
+      vat: config?.vat || 0,
+      insuranceFactor: config?.insuranceFactor || 0,
+      ecommerceFactor: config?.ecommerceFactor || 0,
+      dim: config?.dim || 5000,
+      localFactor: config?.localFactor || 0.8,
       logo: vendor.logo || undefined,
     },
   });
@@ -107,31 +105,31 @@ const ConfigForm = () => {
       updateConfig(form.getValues(), {
         onSuccess: (data) => {
           form.reset();
-          toast({description: data?.message});
+          toast({ description: data?.message });
           router.invalidate().then(async () => {
-            await reloadVendor()
-            await refetchConfig()
+            await reloadVendor();
+            await refetchConfig();
             setIsEditing(false);
           });
           setIsEditing(false);
         },
         onError: (data) => {
-          toast({description: data.message, variant: "destructive"});
+          toast({ description: data.message, variant: "destructive" });
         },
       });
     } else {
       createConfig(form.getValues(), {
         onSuccess: (data) => {
           form.reset();
-          toast({description: data?.message});
+          toast({ description: data?.message });
           router.invalidate().then(async () => {
-            await reloadVendor()
-            await refetchConfig()
+            await reloadVendor();
+            await refetchConfig();
             setIsEditing(false);
           });
         },
         onError: (data) => {
-          toast({description: data.message, variant: "destructive"});
+          toast({ description: data.message, variant: "destructive" });
         },
       });
     }
@@ -162,7 +160,7 @@ const ConfigForm = () => {
                           {stations
                             .filter(
                               (station: Station) =>
-                                station.type === StationType.REGIONAL
+                                station.type === StationType.REGIONAL,
                             )
                             .map((station) => (
                               <SelectItem key={station.id} value={station.id!}>
@@ -228,22 +226,22 @@ const ConfigForm = () => {
               />
 
               <FormInput
-                  control={form.control}
-                  disabled={!isEditing}
-                  name="localFactor"
-                  description="Multiplication Percentage for local deliveries (e.g 90 = 90% of total price before VAT & Insurance)"
-                  label="Local Percentage(%)"
-                  placeholder="90"
-                  type="number"
+                control={form.control}
+                disabled={!isEditing}
+                name="localFactor"
+                description="Multiplication Percentage for local deliveries (e.g 90 = 90% of total price before VAT & Insurance)"
+                label="Local Percentage(%)"
+                placeholder="90"
+                type="number"
               />
               <FormInput
-                  control={form.control}
-                  disabled={!isEditing}
-                  name="dim"
-                  description="A factor used to calculate dimension weight, higher dimension weight will be used for price calculation default 5000cm3/kg (international standard)"
-                  label="Dimension factor (cm3/kg)"
-                  placeholder="5000"
-                  type="number"
+                control={form.control}
+                disabled={!isEditing}
+                name="dim"
+                description="A factor used to calculate dimension weight, higher dimension weight will be used for price calculation default 5000cm3/kg (international standard)"
+                label="Dimension factor (cm3/kg)"
+                placeholder="5000"
+                type="number"
               />
             </div>
             <div className="grid grid-cols-2 gap-4"></div>

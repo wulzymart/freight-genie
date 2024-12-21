@@ -11,7 +11,7 @@ import {
   State,
   Station,
   StationType,
-  TripCoverage,
+  Trip,
 } from "@/lib/custom-types.ts";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -47,7 +47,6 @@ import { Checkbox } from "@/components/ui/checkbox.tsx";
 import FormInput from "@/components/form-input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import ConfirmPin from "@/components/confirm-pin.tsx";
-import { GetAvailableTrips, GetTripRemainingStations } from "@/hooks/trip.ts";
 import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/axios.ts";
@@ -72,12 +71,7 @@ function AddShipmentPage() {
   const {
     user: { staff },
   } = useAuth();
-  const {
-    statesLGAs,
-    stations,
-    routes,
-    trips: loadedTrips,
-  } = useLoaderData({
+  const { statesLGAs, stations } = useLoaderData({
     from: "/_authenticated",
   });
   const form = useForm<z.infer<typeof ShipmentSchema>>({
@@ -95,21 +89,23 @@ function AddShipmentPage() {
   const coverage = form.watch("coverage");
   const type = form.watch("type");
   const originId = form.watch("originId");
-  const tripId = form.watch("tripId");
-  const trips = GetAvailableTrips(
-    loadedTrips,
-    routes,
-    originId,
-    coverage === ShipmentCoverage.LOCAL
-      ? TripCoverage.LASTMAN
-      : coverage === ShipmentCoverage.REGIONAL
-        ? TripCoverage.REGIONAL
-        : coverage === ShipmentCoverage.INTRASTATE
-          ? TripCoverage.INTRASTATE
-          : TripCoverage.INTERSTATE,
-  );
+  const [trips, setTrips] = useState<
+    (Trip & { remainingStationIds?: string[] })[]
+  >([]);
 
+  useEffect(() => {
+    if (!coverage || !originId) return;
+    axiosInstance
+      .get(
+        `/vendor/trips/for-shipment?coverage=${coverage}&originId=${originId}`,
+      )
+      .then(({ data }: { data: ApiResponseType }) => {
+        setTrips(data.trips);
+      });
+  }, [coverage, originId]);
+  const tripId = form.watch("tripId");
   const trip = trips.find((trip) => trip.id === tripId);
+  console.log(trip);
   const [state, setState] = useState<State | undefined>();
   const [region, setRegion] = useState<Station | undefined>();
   const [originStateCode, setOriginStateCode] = useState<string | undefined>(
@@ -146,9 +142,11 @@ function AddShipmentPage() {
       (station) => station.type === StationType.REGIONAL,
     );
   }
-  // const tripStationIds = trip ? getTripStationIds(trip, routes, stations) : [];
+
   const destinationStationsList = trip
-    ? GetTripRemainingStations(trip, stations, routes, originId)
+    ? trip.remainingStationIds?.map(
+        (id) => stations.find((station) => station.id === id)!,
+      ) || []
     : [];
 
   const [destinationStateCode, setDestinationStateCode] = useState<
@@ -223,6 +221,9 @@ function AddShipmentPage() {
                             form.setValue("type", ShipmentType.DIRECT);
                             form.resetField("originId");
                             form.resetField("code");
+                            setState(undefined);
+                            setRegion(undefined);
+                            setTrips([]);
                             setOriginStateCode(
                               statesLGAs.find(
                                 (state: State) =>
@@ -274,6 +275,7 @@ function AddShipmentPage() {
                             form.resetField("destinationId");
                           }}
                           value={field.value}
+                          disabled={coverage === ShipmentCoverage.LOCAL}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select shipment type" />
@@ -308,6 +310,8 @@ function AddShipmentPage() {
                         setState(state);
                         form.resetField("code");
                         form.resetField("originId");
+                        form.resetField("tripId");
+                        setTrips([]);
                         setOriginStateCode(
                           statesLGAs.find(
                             (state: State) =>
@@ -357,6 +361,8 @@ function AddShipmentPage() {
                           form.resetField("code");
                           form.resetField("originId");
                           form.resetField("destinationId");
+                          form.resetField("tripId");
+                          setTrips([]);
                           setOriginStateCode(
                             statesLGAs.find(
                               (state: State) =>
@@ -487,7 +493,7 @@ function AddShipmentPage() {
                                   }}
                                   defaultValue={field.value}
                                   value={field.value}
-                                  disabled={!trips.length}
+                                  // disabled={!trips.length}
                                 >
                                   <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Select Trip" />
@@ -528,10 +534,10 @@ function AddShipmentPage() {
                                       );
                                     }}
                                     defaultValue={field.value}
-                                    disabled={
-                                      !destinationStationsList ||
-                                      !destinationStationsList.length
-                                    }
+                                    // disabled={
+                                    //   !destinationStationsList ||
+                                    //   !destinationStationsList.length
+                                    // }
                                   >
                                     <SelectTrigger>
                                       <SelectValue placeholder="Select destination" />

@@ -1,19 +1,8 @@
-"use client"
+"use client";
 
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut, RefreshCcw,
-  Sparkles,
-} from "lucide-react"
+import { BadgeCheck, ChevronsUpDown, LogOut, RefreshCcw } from "lucide-react";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,37 +11,37 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
-import {useRouter} from "@tanstack/react-router";
-import {useAuth} from "@/hooks/auth-context.tsx";
-import {useCallback} from "react";
-import {Route} from "@/routes/_authenticated.tsx";
+} from "@/components/ui/sidebar";
+import { Link, useRouter } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/auth-context.tsx";
+import { useCallback } from "react";
+import { Route } from "@/routes/_authenticated.tsx";
 import useVendor from "@/hooks/vendor.ts";
 
 export function NavUser({
   user,
 }: {
   user: {
-    name: string
-    email: string
-    avatar: string
-  }
+    name: string;
+    email: string;
+    avatar: string;
+  };
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile } = useSidebar();
   const navigate = Route.useNavigate();
   const router = useRouter();
-  const {reloadVendor} = useVendor();
-  function reload(){
-    reloadVendor().then(async() => {
-      await router.invalidate()
-      await router.load()
-    })
+  const { reloadVendor } = useVendor();
+  function reload() {
+    reloadVendor().then(async () => {
+      await router.invalidate();
+      await router.load();
+    });
   }
   const { logout } = useAuth();
   const signOut = useCallback(async () => {
@@ -102,24 +91,13 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
                 <BadgeCheck />
-                Account
+                <Link to="/user/security">Security</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
-              </DropdownMenuItem>
+              {/*<DropdownMenuItem>*/}
+              {/*  <Bell />*/}
+              {/*  Notifications*/}
+              {/*</DropdownMenuItem>*/}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={reload}>
@@ -135,5 +113,5 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

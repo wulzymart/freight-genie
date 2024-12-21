@@ -63,9 +63,10 @@ function ShipmentPage() {
                   <MapPin className="w-5 h-5 mr-2 text-red-600" />
                   Destination
                 </h3>
-                <p>{shipment.destination.name}</p>
-                <p>{shipment.destination.state.name}</p>
-                <p className="text-gray-600">{shipment.destination.address}</p>
+                <p>{shipment.destination?.name}</p>
+                <p>{shipment.destination?.state.name}</p>
+                <p className="text-gray-600">{shipment.destination?.address}</p>
+                <p>{!shipment.destination && "Last-man Delivery"}</p>
               </div>
             </div>
 

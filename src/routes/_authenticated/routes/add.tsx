@@ -158,13 +158,17 @@ function RouteForm() {
 
   const onSubmit = () => {
     const values = form.getValues();
-    console.log(values);
+    toast({
+      description: "Submitting please wait",
+    });
 
     mutate(values, {
       onSuccess: (data) => {
         toast({
           description: data.message,
         });
+        setOriginState(null);
+        setDestinationState(null);
         form.reset();
       },
       onError: (error) => {
@@ -185,11 +189,11 @@ function RouteForm() {
       form.setValue(
         "code",
         routeTripCodeGen(
-          routes,
           coverage,
           type,
           originState.code,
           coverage === RouteCoverage.INTERSTATE ? destinationState?.code : null,
+          routes,
         ),
       );
   }, [originState, destinationState]);

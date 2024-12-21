@@ -20,7 +20,7 @@ import { VehicleCoverage, VehicleType } from "@/lib/custom-types.ts";
 import { ArrowUpDown, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { useState } from "react";
-import { sortOrder, VehiclesQueryStrings } from "@/lib/query-params.tsx";
+import { sortOrder, VehiclesQueryStrings } from "@/lib/query-params.ts";
 import _ from "lodash";
 
 export function VehicleTable() {

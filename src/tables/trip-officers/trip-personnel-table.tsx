@@ -1,5 +1,6 @@
 import { useLoaderData, useNavigate, useSearch } from "@tanstack/react-router";
 import { DataTable } from "@/components/ui/data-table.tsx";
+import { columns } from "@/tables/routes/columns.tsx";
 import {
   Card,
   CardContent,
@@ -15,39 +16,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label.tsx";
-import { TripCoverage, TripStatus, TripType } from "@/lib/custom-types.ts";
-import { ArrowUpDown, Check, ChevronsUpDown, Filter } from "lucide-react";
+import { RouteCoverage, RouteType } from "@/lib/custom-types.ts";
+import { ArrowUpDown, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { useState } from "react";
-import { sortOrder, TripsQueryStrings } from "@/lib/query-params.ts";
+import { RoutesQueryStrings, sortOrder } from "@/lib/query-params.ts";
 import _ from "lodash";
-import { columns } from "@/tables/trips/columns.tsx";
-import { DateRangePicker } from "@/components/date-range-picker.tsx";
-import { DateRange } from "react-day-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover.tsx";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command.tsx";
-import { cn } from "@/lib/utils.ts";
 
-export function TripTable() {
-  const { trips: data, count } = useLoaderData({
-    from: "/_authenticated/trips/",
+export function TripPersonnelTable() {
+  const { routes: data, count } = useLoaderData({
+    from: "/_authenticated/routes/",
   });
-  const { routes } = useLoaderData({
-    from: "/_authenticated",
-  });
-  const search: TripsQueryStrings = useSearch({
-    from: "/_authenticated/trips/",
+  const search: RoutesQueryStrings = useSearch({
+    from: "/_authenticated/routes/",
   });
   const [coverageOrder, setCoverageOrder] = useState(
     search?.order?.coverage || sortOrder.ASC,
@@ -60,53 +41,42 @@ export function TripTable() {
   );
   const [coverage, setCoverage] = useState(search?.coverage || "All");
   const [type, setType] = useState(search?.type || "All");
-  const [status, setStatus] = useState(search?.status || "All");
-  const [dateRange, setDateRange] = useState<DateRange>({
-    to: search.to ? new Date(search.to) : undefined,
-    from: search.from ? new Date(search.from) : undefined,
-  });
-  const [openPopover, setOpenPopover] = useState(false);
-  const [routeId, setRouteId] = useState<number | undefined>(undefined);
   const navigate = useNavigate();
   const onApply = async () => {
-    const queryObject: TripsQueryStrings = {
+    const queryObject: RoutesQueryStrings = {
       ...search,
-      coverage: coverage === "All" ? undefined : (coverage as TripCoverage),
-      type: type === "All" ? undefined : (type as TripType),
-      status: status === "All" ? undefined : (status as TripStatus),
+      coverage: coverage === "All" ? undefined : (coverage as RouteCoverage),
+      type: type === "All" ? undefined : (type as RouteType),
       order: { coverage: coverageOrder, type: typeOrder, code: codeOrder },
-      from: dateRange.from ? dateRange.from.toLocaleDateString() : undefined,
-      to: dateRange.to ? dateRange.to.toLocaleDateString() : undefined,
-      routeId: routeId,
     };
-
+    console.log(JSON.stringify(queryObject), JSON.stringify(search || {}));
     if (_.isEqual(queryObject, search)) {
       return;
     }
     queryObject.skip = 0;
     queryObject.take = 10;
-    await navigate({ to: "/trips", search: queryObject });
+    await navigate({ to: "/routes", search: queryObject });
   };
   async function handlePrev() {
     if (search && search.skip && search.skip > 0) {
-      const queryObject: TripsQueryStrings = { ...search };
+      const queryObject: RoutesQueryStrings = { ...search };
       queryObject.skip = queryObject.skip! - queryObject.take! || 10;
       queryObject.take = 10;
-      await navigate({ to: "/trips", search: queryObject });
+      await navigate({ to: "/routes", search: queryObject });
     }
   }
   async function handleNext() {
     if (search && search.skip && search.skip + (search.take || 10) < count) {
-      const queryObject: TripsQueryStrings = { ...search };
+      const queryObject: RoutesQueryStrings = { ...search };
       queryObject.take = 10;
       queryObject.skip = queryObject.skip! + queryObject.take;
-      await navigate({ to: "/trips", search: queryObject });
+      await navigate({ to: "/routes", search: queryObject });
     }
   }
   return (
     <div>
       <CardHeader>
-        <CardTitle className="mb-8">Available Trips</CardTitle>
+        <CardTitle className="mb-8">Available Routes</CardTitle>
         <Card>
           <CardHeader>
             <CardTitle className="font-medium text-base">
@@ -124,7 +94,7 @@ export function TripTable() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                  <div className="grid grid-cols-1 lg:grid-flow-col gap-4">
                     <div className="space-y-4">
                       <Label>Coverage</Label>
                       <Select
@@ -135,24 +105,8 @@ export function TripTable() {
                           <SelectValue placeholder="Route Coverage" />
                         </SelectTrigger>
                         <SelectContent>
-                          <div className="space-y-4">
-                            <Label>Type</Label>
-                            <Select defaultValue={type} onValueChange={setType}>
-                              <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Route Type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="All">All</SelectItem>
-                                {Object.values(TripType).map((type) => (
-                                  <SelectItem key={type} value={type}>
-                                    {type}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
                           <SelectItem value="All">All</SelectItem>
-                          {Object.values(TripCoverage).map((coverage) => (
+                          {Object.values(RouteCoverage).map((coverage) => (
                             <SelectItem key={coverage} value={coverage}>
                               {coverage}
                             </SelectItem>
@@ -168,92 +122,13 @@ export function TripTable() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="All">All</SelectItem>
-                          {Object.values(TripType).map((type) => (
+                          {Object.values(RouteType).map((type) => (
                             <SelectItem key={type} value={type}>
                               {type}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="space-y-4">
-                      <Label>Status</Label>
-                      <Select defaultValue={type} onValueChange={setStatus}>
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Trip Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="All">All</SelectItem>
-                          {Object.values(TripStatus).map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-4 col-span-2 w-full">
-                      <Label>Date Created</Label>
-                      <DateRangePicker
-                        value={dateRange}
-                        setDate={setDateRange}
-                      />
-                    </div>
-                    <div className="space-y-4 flex flex-col">
-                      <Label>Route</Label>
-                      <Popover open={openPopover} onOpenChange={setOpenPopover}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={openPopover}
-                            className="w-[200px] justify-between"
-                          >
-                            {routeId
-                              ? routes.find((route) => route.id === +routeId)
-                                  ?.code
-                              : "Select Route..."}
-                            <ChevronsUpDown className="opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[200px] p-0">
-                          <Command>
-                            <CommandInput placeholder="Search Routes..." />
-                            <CommandList>
-                              <CommandEmpty>No Route Found.</CommandEmpty>
-                              <CommandGroup>
-                                {routes.map((route) => (
-                                  <CommandItem
-                                    key={route.id}
-                                    value={route.id as any}
-                                    onSelect={(currentValue) => {
-                                      const selectedId = routes.find(
-                                        (route) => route.code === currentValue,
-                                      )!.id;
-                                      setRouteId(
-                                        selectedId === routeId
-                                          ? undefined
-                                          : selectedId,
-                                      );
-                                      setOpenPopover(false);
-                                    }}
-                                  >
-                                    {route.code}
-                                    <Check
-                                      className={cn(
-                                        "ml-auto",
-                                        routeId === route.id
-                                          ? "opacity-100"
-                                          : "opacity-0",
-                                      )}
-                                    />
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
                     </div>
                   </div>
                 </CardContent>
